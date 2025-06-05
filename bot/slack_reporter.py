@@ -3,6 +3,7 @@ import requests
 from datetime import datetime, timezone, timedelta
 
 def send_report_to_slack(wallets, balances, webhook_url):
+    print("🚀 Sending text report to Slack...")  # ✅ Add this
     gmt7_now = datetime.now(timezone(timedelta(hours=7)))
     timestamp = gmt7_now.strftime("%Y-%m-%d %H:%M GMT+7")
 
