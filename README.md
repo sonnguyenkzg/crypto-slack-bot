@@ -1,26 +1,27 @@
 # USDT Wallet Balance Slack Bot
 
-A Python bot that automatically monitors USDT (TRC20) wallet balances, maintains historical records, generates trend charts, and sends comprehensive reports to Slack channels. Designed for automated periodic execution to provide continuous cryptocurrency asset monitoring.
+A Python bot that automatically monitors multiple USDT TRC20 wallet balances using the Tronscan API, maintains historical records in CSV format, generates multi-panel trend visualizations, and delivers comprehensive reports to Slack channels. Built with precision decimal handling and robust error management for reliable automated execution.
 
 ## Features
 
-- **Multi-wallet tracking**: Monitor balances across multiple USDT TRC20 wallets
-- **Historical logging**: Automatic CSV-based balance history storage
-- **Visual reporting**: Dynamic trend charts with individual wallet subplots
-- **Slack integration**: Automated text summaries and chart delivery
-- **Timezone consistency**: All timestamps use GMT+7
-- **Error handling**: Robust API, file, and communication error management
-- **Automated scheduling**: Cron-ready for hands-off operation
+- **Multi-wallet USDT TRC20 tracking**: Monitor balances across multiple configured wallets
+- **Precision decimal handling**: Uses Python's Decimal class for accurate cryptocurrency calculations
+- **Historical CSV logging**: Automatic balance history with GMT+7 timestamps in ISO 8601 format
+- **Multi-panel trend charts**: Individual subplot visualizations for each wallet using matplotlib
+- **Slack integration**: Automated text summaries and chart image uploads via Slack SDK
+- **Robust error handling**: Comprehensive exception handling for API calls, file operations, and Slack communication
+- **Timezone consistency**: All timestamps standardized to GMT+7 across the entire system
+- **Modular architecture**: Clean separation of concerns across dedicated modules
 
 ## How It Works
 
-The bot follows a sequential execution flow:
+The bot executes a sequential workflow:
 
-1. **Configuration loading**: Reads wallet addresses and Slack credentials
-2. **Balance fetching**: Queries Tronscan API for current USDT TRC20 balances
-3. **Data logging**: Appends timestamped balance data to CSV file
-4. **Chart generation**: Creates trend visualization from historical data
-5. **Slack reporting**: Delivers formatted summary and chart to designated channel
+1. **Balance Fetching**: Queries Tronscan API for current USDT TRC20 balances using the official contract address
+2. **Precision Processing**: Handles all monetary calculations using Python's Decimal class for accuracy
+3. **CSV Logging**: Appends timestamped balance data with GMT+7 timezone consistency
+4. **Chart Generation**: Creates multi-panel visualizations showing individual wallet trends
+5. **Slack Reporting**: Sends formatted summaries and uploads chart images to designated channels
 
 ## Prerequisites
 
@@ -29,15 +30,47 @@ The bot follows a sequential execution flow:
 - Git for repository cloning
 - Slack workspace with configured bot application
 
-### Slack App Requirements
+## Slack App Setup (For IT Team)
 
-Your Slack app needs these OAuth scopes:
-- `chat:write` - Post messages to channels
-- `files:write` - Upload chart images
+### Step 1: Create Slack App
+1. Go to https://api.slack.com/apps
+2. Click **"Create New App"**
+3. Select **"From scratch"**
+4. Enter App Name: `USDT Wallet Monitor` (or your preferred name)
+5. Select your workspace from the dropdown
+6. Click **"Create App"**
 
-You'll need to obtain:
-- Bot User OAuth Token (starts with `xoxb-`)
-- Target Slack Channel ID
+### Step 2: Configure OAuth Scopes
+1. In the left sidebar, click **"OAuth & Permissions"**
+2. Scroll down to **"Scopes"** section
+3. Under **"Bot Token Scopes"**, click **"Add an OAuth Scope"**
+4. Add these two required scopes:
+   - `chat:write` - Send messages to channels
+   - `files:write` - Upload chart images
+
+### Step 3: Install App to Workspace
+1. Still on the **"OAuth & Permissions"** page
+2. Scroll to the top and click **"Install to Workspace"**
+3. Review permissions and click **"Allow"**
+4. Copy the **"Bot User OAuth Token"** (starts with `xoxb-`)
+   - **Important**: Save this token securely - you'll need it for configuration
+
+### Step 4: Get Channel ID
+1. Open Slack desktop/web app
+2. Navigate to the channel where you want bot reports
+3. Right-click the channel name and select **"View channel details"**
+4. Scroll down to find the **Channel ID** (format: C1234567890)
+5. Copy this Channel ID - you'll need it for configuration
+
+### Step 5: Add Bot to Channel
+1. In the target Slack channel, type: `@USDT Wallet Monitor` (or your app name)
+2. Slack will prompt to add the bot to the channel
+3. Click **"Invite to Channel"**
+
+### Required Information for Bot Configuration
+After completing the Slack setup, provide these to the bot administrator:
+- **Bot User OAuth Token**: `xoxb-...` (from Step 3)
+- **Channel ID**: `C...` (from Step 4)
 
 ## Installation
 
@@ -47,103 +80,152 @@ You'll need to obtain:
    cd crypto-slack-bot
    ```
 
-2. **Set up Python environment**
+2. **Create Python virtual environment**
    ```bash
    python3 -m venv .venv
    source .venv/bin/activate
+   ```
+
+3. **Install dependencies**
+   ```bash
    pip install -r requirements.txt
    ```
 
-3. **Configure environment variables**
-   
-   Create a `.env` file in the project root:
-   ```env
-   SLACK_BOT_TOKEN="xoxb-YOUR_SLACK_BOT_TOKEN_HERE"
-   SLACK_CHANNEL_ID="YOUR_SLACK_CHANNEL_ID_HERE"
-   ```
+## Configuration
 
-4. **Configure wallet addresses**
-   
-   Edit `bot/config.py` to add your wallet addresses:
-   ```python
-   WALLETS = {
-       "Main Wallet": "TRON_WALLET_ADDRESS_1",
-       "Trading Wallet": "TRON_WALLET_ADDRESS_2",
-       # Add additional wallets as needed
-   }
-   ```
+### Environment Variables
 
-## Configuration Options
+Create a `.env` file in the project root:
+```env
+SLACK_BOT_TOKEN="xoxb-YOUR_SLACK_BOT_TOKEN_HERE"
+SLACK_CHANNEL_ID="YOUR_SLACK_CHANNEL_ID_HERE"
+```
+
+### Wallet Configuration
+
+Edit `bot/config.py` to modify the `WALLETS` dictionary:
+```python
+WALLETS = {
+    "Wallet Name 1": "TRC20_WALLET_ADDRESS_1",
+    "Wallet Name 2": "TRC20_WALLET_ADDRESS_2",
+    # Add or modify wallet entries as needed
+}
+```
+
+### Configuration Options
 
 Key settings in `bot/config.py`:
 
-- **WALLETS**: Dictionary mapping wallet names to TRC20 addresses
-- **NUM_RECORDS_TO_PLOT**: Number of historical records to display in charts (default: 13)
+- **WALLETS**: Dictionary mapping display names to TRC20 wallet addresses
+- **NUM_RECORDS_TO_PLOT**: Number of historical data points shown in charts (default: 13)
+- **SLACK_BOT_TOKEN**: Loaded from environment variables via python-dotenv
+- **SLACK_CHANNEL_ID**: Target channel for bot reports
 
 ## Usage
 
 ### Manual Execution
 
-For testing and immediate execution:
+Test the bot manually:
 
 ```bash
+# Ensure virtual environment is active
 source .venv/bin/activate
 python main.py
 ```
 
-### Automated Execution
+The bot will:
+- Fetch current USDT balances for all configured wallets
+- Log data to `wallet_balances.csv`
+- Generate `wallet_trend.png` chart
+- Send report to configured Slack channel
 
-Set up automated execution using cron:
+### Automated Execution with Cron
+
+Set up automated execution for daily reports at 12:00 AM GMT+7:
 
 ```bash
 crontab -e
 ```
 
-Add this line for execution every minute:
+Add this line for daily execution at midnight GMT+7:
 ```bash
-* * * * * cd /home/azureuser/crypto-slack-bot/ && /home/azureuser/crypto-slack-bot/.venv/bin/python main.py >> /home/azureuser/crypto-slack-bot/cron.log 2>&1
+0 17 * * * cd /path/to/crypto-slack-bot && /path/to/crypto-slack-bot/.venv/bin/python main.py >> /path/to/crypto-slack-bot/cron.log 2>&1
 ```
 
-**Note**: Adjust the path `/home/azureuser/crypto-slack-bot/` to match your installation directory.
+**Important**: 
+- Replace `/path/to/crypto-slack-bot` with your actual installation path
+- The cron time `0 17 * * *` assumes your server runs on UTC (17:00 UTC = 12:00 AM GMT+7)
+- Adjust the hour if your server uses a different timezone
+
+For different schedules:
+- Every hour: `0 * * * *`
+- Every day at 9 AM GMT+7: `0 2 * * *` (if server is UTC)
+
+## Project Structure
+
+```
+crypto-slack-bot/
+├── bot/
+│   ├── config.py          # Configuration settings and environment variables
+│   ├── usdt_checker.py    # USDT balance fetching via Tronscan API
+│   ├── csv_logger.py      # CSV logging with timestamp handling
+│   └── visualizer.py      # Multi-panel chart generation
+├── main.py                # Main execution script
+├── requirements.txt       # Python dependencies
+├── .env                   # Environment variables (Slack credentials)
+├── wallet_balances.csv    # Historical balance data (auto-generated)
+├── wallet_trend.png       # Generated trend chart (auto-generated)
+└── cron.log              # Execution logs (when run via cron)
+```
+
+## Dependencies
+
+The project uses these Python packages:
+
+- **requests**: HTTP API communication with Tronscan
+- **pandas**: Data processing and CSV handling
+- **matplotlib**: Chart generation and visualization
+- **slack-sdk**: Slack API integration
+- **python-dotenv**: Environment variable management
+
+## API Details
+
+### Tronscan API Integration
+- **Endpoint**: `https://apilist.tronscanapi.com/api/account/tokens`
+- **USDT Contract**: `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t` (official TRC20)
+- **Timeout**: 10 seconds per request
+- **Error Handling**: Comprehensive exception handling for network issues
+
+### Slack API Integration
+- **Method**: Slack SDK WebClient
+- **Text Messages**: `chat_postMessage` API
+- **File Uploads**: `files_upload_v2` API
+- **Error Handling**: SlackApiError exception handling
 
 ## Output Files
 
-The bot generates several files during operation:
+### wallet_balances.csv
+Historical balance data with columns:
+- `Timestamp`: ISO 8601 format with GMT+7 timezone
+- Individual wallet columns with precise decimal balances
 
-- `wallet_balances.csv` - Historical balance data with GMT+7 timestamps
-- `wallet_trend.png` - Generated trend chart image
-- `cron.log` - Execution logs and error messages (when run via cron)
+### wallet_trend.png
+Multi-panel chart featuring:
+- Individual subplots for each wallet
+- Current balance displayed in subplot titles
+- GMT+7 timestamp formatting on axes
+- Clean grid layout with shared axes
 
-## Troubleshooting
+### cron.log
+Execution logs containing:
+- Start/end timestamps for each run
+- Success/error messages for each operation
+- Detailed error traces for debugging
 
-### Slack Integration Issues
+## Development Notes
 
-- Verify `.env` file contains correct `SLACK_BOT_TOKEN` and `SLACK_CHANNEL_ID`
-- Ensure Slack app has required permissions (`chat:write`, `files:write`)
-- Confirm bot is invited to the target channel
-- Check `cron.log` for `SlackApiError` messages
-
-### Chart and Timestamp Issues
-
-- Verify all timestamps in `wallet_balances.csv` use GMT+7
-- If timezone inconsistencies exist, delete `wallet_balances.csv` to regenerate
-- Confirm `NUM_RECORDS_TO_PLOT` setting in `bot/config.py`
-
-### Cron Execution Issues
-
-- Verify cron job syntax in `crontab -l`
-- Check system cron logs: `/var/log/syslog` or `journalctl -xe`
-- Ensure Python virtual environment path is correct
-- Confirm working directory path in cron command
-
-### General Debugging
-
-The `cron.log` file contains detailed execution information and error messages. Always check this file first when troubleshooting issues.
-
-## License
-
-This project is open source. Please check the repository for license details.
-
-## Contributing
-
-Contributions are welcome. Please submit pull requests or issues through the GitHub repository.
+- All monetary calculations use `Decimal` class for precision
+- Timestamps consistently use GMT+7 timezone across all modules
+- Modular design allows easy extension and maintenance
+- Comprehensive error handling prevents silent failures
+- Type hints improve code clarity and IDE support
