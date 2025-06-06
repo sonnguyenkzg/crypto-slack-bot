@@ -167,14 +167,13 @@ When the bot runs successfully, it sends a Slack message containing a summary of
 
 **Slack Message Example:**
 ```
-📊 *USDT Wallet Balance Report*
-🕒 Timestamp: 2025-06-06 00:00 GMT+7
-
-• Wallet Name 1: 1,250.32 USDT
-• Wallet Name 2: 3,418.78 USDT
-• Wallet Name 3: 892.00 USDT
-
-📈 See balance trends in the chart below.
+:dollar: USDT TRC20 Wallet Balances :dollar:
+As of 2025-06-06 18:16 GMT+7
+• KZP TH Y 1: 35,015.48 USDT
+• KZP TH BM 1: 101,911.39 USDT
+• KZP PH 1: 3,621.17 USDT
+• KZP PH BM 1: 2,553.99 USDT
+:heavy_plus_sign: Total: 143,102.03 USDT
 ```
 
 **Trend Chart:**
