@@ -167,14 +167,14 @@ When the bot runs successfully, it sends a Slack message containing a summary of
 
 **Slack Message Example:**
 ```
-📊 *USDT Wallet Balance Report*
-🕒 Timestamp: 2025-06-06 00:00 GMT+7
+   📊 **USDT Wallet Balance Report**
+   🕒 Timestamp: 2025-06-06 00:00 GMT+7
 
-• Wallet Name 1: 1,250.32 USDT
-• Wallet Name 2: 3,418.78 USDT
-• Wallet Name 3: 892.00 USDT
+      • Wallet Name 1: 1,250.32 USDT
+      • Wallet Name 2: 3,418.78 USDT
+      • Wallet Name 3: 892.00 USDT
 
-➕ Total: 5,331.03 USDT
+   ➕ **Total**: 5,331.03 USDT
 ```
 **Trend Chart:**
 ![Wallet Trend](wallet_trend.png)
