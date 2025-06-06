@@ -134,3 +134,48 @@ You can run the bot manually to test its functionality and see immediate output.
 # Make sure your virtual environment is active
 source .venv/bin/activate
 python main.py
+
+* `* * * * *`: Runs the job every minute.
+    * `cd /home/azureuser/crypto-slack-bot/`: Changes the working directory to your project's root. This is **CRUCIAL** for the script to find its configuration (`.env`, `bot/config.py`) and data files (`wallet_balances.csv`).
+    * `&&`: Ensures the next command runs only if `cd` is successful.
+    * `/home/azureuser/crypto-slack-bot/.venv/bin/python`: The **absolute path** to the Python interpreter within your virtual environment. This guarantees the script runs with the correct dependencies.
+    * `main.py`: Your main script.
+    * `>> /home/azureuser/crypto-slack-bot/cron.log 2>&1`: Redirects all standard output (`stdout`) and standard error (`stderr`) to `cron.log` in your project directory. `>>` appends, so the file will grow. This is vital for monitoring and debugging.
+
+3.  **Save and Exit** the crontab editor.
+
+---
+
+## Expected Output & Logging
+
+Upon successful execution, the bot will:
+
+* **Slack Channel:**
+    * Post a text message summary of wallet balances (e.g., "USDT TRC20 Wallet Balances... Total: X.XX USDT").
+    * Upload an image (`wallet_trend.png`) displaying the trend chart.
+* **Project Directory (`/home/azureuser/crypto-slack-bot/`):**
+    * `wallet_balances.csv`: Updated every minute with new balance records.
+    * `wallet_trend.png`: Regenerated every minute with the latest chart.
+    * `cron.log`: Contains output from `print()` statements and any errors. This is your primary debugging tool for cron jobs. All timestamps in logs and charts are consistently GMT+7.
+
+---
+
+## Troubleshooting Tips
+
+* **"Bot not posting to Slack" or "Chart not uploading":**
+    * Check `cron.log` for errors (e.g., `SlackApiError`).
+    * Verify `SLACK_BOT_TOKEN` and `SLACK_CHANNEL_ID` in your `.env` file are correct and have no typos.
+    * Ensure your Slack App has the necessary permissions (`chat:write`, `files:write`) and the bot user is invited to the channel.
+* **"Chart not showing latest times" or "Timestamp mismatch":**
+    * Confirm `wallet_balances.csv` timestamps are in GMT+7. The bot is configured to display GMT+7 throughout.
+    * If you've encountered timezone issues previously, ensure `wallet_balances.csv` only contains consistent GMT+7 data. If not, delete it and let the bot recreate it.
+* **"Python errors in cron.log":**
+    * Review the traceback in `cron.log`.
+    * Ensure the Python interpreter path in your cron job is correct (`.venv/bin/python`).
+    * Verify the `cd` command in the cron job is correct and working.
+* **"Cron job not running at all":**
+    * Double-check `crontab -e` to ensure the line is correctly added and not commented out (no `#` at the start).
+    * Basic cron log: Check `/var/log/syslog` or `journalctl -xe` for cron-related errors.
+* **General Debugging:** The `cron.log` file is your best friend. Always check it first for any issues.
+
+---
