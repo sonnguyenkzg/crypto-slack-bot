@@ -161,6 +161,26 @@ For different schedules:
 - Every hour: `0 * * * *`
 - Every day at 9 AM GMT+7: `0 2 * * *` (if server is UTC)
 
+## Sample Output
+
+When the bot runs successfully, it sends a Slack message containing a summary of wallet balances and a visual chart. Below is an example of what the Slack report looks like:
+
+**Slack Message Example:**
+```
+📊 *USDT Wallet Balance Report*
+🕒 Timestamp: 2025-06-06 00:00 GMT+7
+
+• Wallet Name 1: 1,250.32 USDT
+• Wallet Name 2: 3,418.78 USDT
+• Wallet Name 3: 892.00 USDT
+
+📈 See balance trends in the chart below.
+```
+
+**Trend Chart:**
+![Wallet Trend](wallet_trend.png)
+
+
 ## Project Structure
 
 ```
