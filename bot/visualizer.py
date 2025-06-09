@@ -53,7 +53,7 @@ def plot_wallet_trends(csv_path: str = "wallet_balances.csv", output_path: str =
     # CSV timestamps are like '2025-06-06T16:30:14+07:00'.
     # To ensure Matplotlib displays the *exact* '16:30' values without internal UTC conversion,
     # we strip the '+07:00' offset from the string BEFORE parsing to create NAIVE datetime objects.
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"].str.split('+').str[0]) 
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"].astype(str).str.split('+').str[0])
 
     # Take the last 'NUM_RECORDS_TO_PLOT' unique time points, ensuring sorting by Timestamp.
     # Uses the imported NUM_RECORDS_TO_PLOT from config.

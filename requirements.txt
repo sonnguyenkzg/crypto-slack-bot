@@ -1,5 +1,15 @@
-requests
-pandas
-matplotlib
-slack_sdk
-python-dotenv
+# Core dependencies
+requests>=2.31.0
+python-dotenv>=1.0.0
+slack-sdk>=3.21.0
+
+# Data handling (for CSV operations)
+# Note: csv module is built-in, but keeping this for any future pandas usage
+# pandas>=2.0.0
+
+# Visualization (currently not used - removed plotting functionality)
+# matplotlib>=3.7.0
+
+# Slack server dependencies (if running slack_listener as web service)
+# Flask>=2.3.0
+# gunicorn>=21.0.0
