@@ -117,39 +117,81 @@ Your bot starts with wallets defined in `wallets.json`. You can add/remove walle
 
 ## Usage
 
-### Scheduled Reports (Automated)
+### Quick Start (Both Services)
 
-Run the main bot for automated balance reporting:
-
+**1. Create the startup script:**
 ```bash
-# Test manually
-python main.py
+nano start_bot.sh
 ```
 
-**For automated execution with cron (daily at midnight GMT+7):**
+**2. Copy this content into the file:**
 ```bash
-# Edit crontab
-crontab -e
+#!/bin/bash
+# start_bot.sh - Start USDT Wallet Bot Services
 
-# Add line for daily execution at midnight GMT+7 (17:00 UTC if server is UTC)
-0 17 * * * cd /path/to/crypto-slack-bot && /path/to/.venv/bin/python main.py >> cron.log 2>&1
+echo "🚀 Starting USDT Wallet Bot..."
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Start interactive bot in background (24/7 commands)
+echo "📡 Starting interactive command bot..."
+nohup python slack_listener.py > slack_listener.log 2>&1 &
+echo "✅ Interactive bot started (PID: $!)"
+
+# Add cron job for daily reports at noon GMT+7
+echo "📅 Setting up daily reports..."
+SCRIPT_DIR=$(pwd)
+(crontab -l 2>/dev/null | grep -v "main.py"; echo "0 5 * * * cd $SCRIPT_DIR && $SCRIPT_DIR/.venv/bin/python main.py >> $SCRIPT_DIR/reports.log 2>&1") | crontab -
+
+echo "✅ Setup complete!"
+echo ""
+echo "📊 Your bot is now running:"
+echo "  🤖 Interactive commands: 24/7 (logs: slack_listener.log)"
+echo "  📅 Daily reports: 12:00 GMT+7 (logs: reports.log)"
+echo ""
+echo "📝 Commands:"
+echo "  Check status: ps aux | grep slack_listener"
+echo "  View logs: tail -f slack_listener.log"
+echo "  Stop bot: pkill -f slack_listener"
 ```
 
-### Interactive Commands (Real-time)
-
-Start the interactive Slack bot:
-
+**3. Make it executable and run:**
 ```bash
-python slack_listener.py
+chmod +x start_bot.sh
+./start_bot.sh
 ```
 
-**Available Commands in Slack:**
+**That's it! Your bot is now:**
+- 🤖 **Accepting commands 24/7** in Slack
+- 📅 **Sending daily reports** at 12:00 PM GMT+7
+
+### Available Commands in Slack
 - `!add "KZP" "WDB2" "TEhmKXCPgX64yjQ3t9skuSyUQBxwaWY4KS"` - Add new wallet
 - `!remove "KZP WDB2"` - Remove wallet
 - `!check` - Check all wallet balances
 - `!check "KZP 96G1"` - Check specific wallet
 - `!list` - List all configured wallets
 - `!help` - Show help message
+
+### Management Commands
+```bash
+# Check if bot is running
+ps aux | grep slack_listener
+
+# View logs
+tail -f slack_listener.log    # Interactive commands
+tail -f reports.log          # Daily reports
+
+# Stop bot
+pkill -f slack_listener
+
+# Restart bot
+./start_bot.sh
+
+# Test manual report
+python main.py
+```
 
 ## Sample Output
 
@@ -191,10 +233,13 @@ crypto-slack-bot/
 │   └── slack_commands.py      # Slack command parsing and handling
 ├── main.py                    # Scheduled reporting script
 ├── slack_listener.py          # Interactive Slack bot listener
+├── start_bot.sh              # Startup script (creates this)
 ├── requirements.txt           # Python dependencies
 ├── .env                       # Environment variables (create this)
 ├── wallets.json              # Wallet storage (auto-managed)
 ├── wallet_balances.csv       # Historical data (auto-generated)
+├── slack_listener.log        # Interactive bot logs (auto-generated)
+├── reports.log               # Daily report logs (auto-generated)
 └── README.md                 # This file
 ```
 
@@ -258,13 +303,31 @@ Key settings in `bot/config.py`:
 
 ## Troubleshooting
 
-**Common Issues:**
-1. **"Bot not responding"** - Check SLACK_APP_TOKEN is set for interactive commands
-2. **"Permission denied"** - Ensure bot has `chat:write` scope and is added to channel
-3. **"API timeout"** - Increase API_TIMEOUT in config.py if network is slow
-4. **"No wallets configured"** - Check wallets.json exists and has valid format
+**Bot not responding to commands?**
+```bash
+# Check if it's running
+ps aux | grep slack_listener
 
-**Logs:**
-- Console output shows detailed operation status
-- Use `python slack_listener.py` to see real-time command processing
-- Check cron.log for scheduled execution history
+# If not running, start it
+./start_bot.sh
+```
+
+**Daily reports not sending?**
+```bash
+# Check cron job exists
+crontab -l
+
+# Test manual report
+python main.py
+```
+
+**Check logs for errors:**
+```bash
+tail -f slack_listener.log    # Interactive bot issues
+tail -f reports.log          # Daily report issues
+```
+
+**Common fixes:**
+- Make sure bot is added to Slack channel
+- Check .env file has correct tokens
+- Verify internet connection for API calls
