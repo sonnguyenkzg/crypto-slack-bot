@@ -267,11 +267,9 @@ def handle_help_command() -> str:
 • `!check` - Check wallet status
 
 **Examples:**
-```
-!add "KZP" "WDB2" "TEhmKXCPgX64yjQ3t9skuSyUQBxwaWY4KS"
-!remove "KZP WDB2"
-!list
-```
+    !add "KZP" "WDB2" "TEhmKXCPgX64yjQ3t9skuSyUQBxwaWY4KS"
+    !remove "KZP WDB2"
+    !list
 
 **Notes:**
 • All arguments must be in quotes
