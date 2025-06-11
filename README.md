@@ -485,6 +485,167 @@ print('Tronscan:', requests.get('https://apilist.tronscanapi.com/api/account/tok
 "
 ```
 
+## Development Workflow for New Features
+
+### Development Phase (Development Server)
+```bash
+# On DEVELOPMENT server
+cd /path/to/crypto-slack-bot
+source .venv/bin/activate
+
+# Create feature branch (optional but recommended)
+git checkout -b feature/new-functionality
+# OR work directly on main for simple changes
+
+# Make your changes
+nano bot/slack_commands.py  # Add new commands
+nano main.py               # Add new functionality
+
+# Test locally
+python3 main.py           # Test daily report
+python3 slack_listener.py # Test interactive commands
+# Send new commands in Slack to test
+```
+
+### Commit and Push (Development Server)
+```bash
+# After testing works perfectly
+git add .
+git commit -m "Add new feature: description"
+git push origin main  # or feature branch
+```
+
+### Production Deployment (Production Server)
+```bash
+# On PRODUCTION server
+cd /home/ubuntu/crypto-slack-bot
+source .venv/bin/activate
+
+# Stop current bot
+pkill -f slack_listener
+
+# Pull latest changes
+git pull origin main
+
+# Test that everything still works
+python3 main.py  # Test new functionality
+
+# Restart bot with new features
+nohup python3 slack_listener.py > slack_listener.log 2>&1 &
+
+# Verify bot is running
+ps aux | grep slack_listener
+
+# Test new commands in Slack
+```
+
+### Rollback Plan (If Something Breaks)
+```bash
+# On PRODUCTION server - if new code breaks
+git log --oneline -5  # See recent commits
+git checkout PREVIOUS_COMMIT_HASH  # Rollback to working version
+
+# Restart bot
+pkill -f slack_listener
+nohup python3 slack_listener.py > slack_listener.log 2>&1 &
+```
+
+## Common Development Scenarios
+
+### Adding New Slack Commands
+```bash
+# Dev server: Modify bot/slack_commands.py
+# Add new command like !export, !backup, !status
+# Test in Slack → Commit → Push → Deploy to prod
+```
+
+### Adding New Wallet Features
+```bash
+# Dev server: Modify bot/usdt_checker.py or bot/wallet_manager.py  
+# Test functionality → Commit → Push → Deploy to prod
+```
+
+### Updating Dependencies
+```bash
+# Development server:
+pip3 install new-package==1.0.0
+pip3 freeze > requirements.txt
+git add requirements.txt && git commit -m "Add new dependency"
+git push origin main
+
+# Production server:
+git pull origin main
+pip3 install -r requirements.txt  # Install new packages
+# Restart services
+```
+
+### Environment/Config Changes
+```bash
+# Dev server: Update config files (NOT .env)
+# Test → Commit code changes → Push
+
+# Production server:
+git pull origin main
+# Manually update .env file on production if needed
+# Restart services
+```
+
+## Development Best Practices
+
+✅ **Always test on development server first**
+✅ **Keep production .env file separate** (never commit sensitive data)
+✅ **Small, incremental changes** (easier to debug and rollback)
+✅ **Monitor logs after deployment**: `tail -f slack_listener.log`
+✅ **Test in Slack immediately** after production deployment
+✅ **Use feature branches** for complex changes
+✅ **Document new commands** in help text and README
+
+### Quick Reference Commands
+
+**Development Workflow:**
+```bash
+# Dev: Develop → Test → Push
+git add . && git commit -m "description" && git push origin main
+```
+
+**Production Deployment:**
+```bash
+# Prod: Pull → Stop → Start → Test
+git pull origin main && pkill -f slack_listener && nohup python3 slack_listener.py > slack_listener.log 2>&1 &
+```
+
+**Emergency Rollback:**
+```bash
+# Prod: Rollback to previous working version
+git log --oneline -3
+git checkout WORKING_COMMIT_HASH
+pkill -f slack_listener && nohup python3 slack_listener.py > slack_listener.log 2>&1 &
+```
+
+## Production Security Model
+
+### What Production Server Can Do:
+✅ **`git pull origin main`** - Pull updates from development
+✅ **`git status`** - Check repository status  
+✅ **`git log`** - View commit history
+✅ **`git checkout commit-hash`** - Switch versions (for rollbacks)
+
+### What Production Server Cannot Do:
+❌ **`git push origin main`** - Cannot push changes (security)
+❌ **`git commit` + push** - Cannot modify repository
+
+### Production Deployment Flow:
+1. **Development server**: Make changes → Test → Commit → Push
+2. **Production server**: Pull changes → Stop services → Start services → Test
+3. **Monitor**: Check logs and Slack functionality
+4. **Rollback if needed**: Checkout previous commit and restart
+
+This security model ensures that:
+- All changes originate from development environment
+- Production cannot accidentally modify the codebase
+- Easy deployment of tested features
+- Quick rollback capability for issues
+
 ## Development Notes
 
 - All monetary calculations use `Decimal` class for precision
@@ -495,6 +656,7 @@ print('Tronscan:', requests.get('https://apilist.tronscanapi.com/api/account/tok
 - Dynamic wallet management through JSON storage
 - Always use virtual environment to avoid system package conflicts
 - Monitor logs regularly to catch issues early
+- Production server maintains read-only access to repository for security
 
 ## Performance Monitoring
 
