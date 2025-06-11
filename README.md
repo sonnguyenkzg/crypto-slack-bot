@@ -35,10 +35,195 @@ Real-time Slack bot that responds to user commands:
 
 ## Prerequisites
 
-- Python 3.8 or higher
-- pip package installer
-- Git for repository cloning
-- Slack workspace with configured bot application
+- **Ubuntu 24.04 LTS** (or similar Linux distribution)
+- **Python 3.11+** (usually pre-installed)
+- **Git** (usually pre-installed)
+- **Internet connection** for API calls
+- **Slack workspace** with bot permissions
+
+## Complete Installation Guide (Ubuntu 24.04)
+
+### Step 1: Server Preparation
+
+```bash
+# Check your system (no installation needed)
+python3 --version          # Should show Python 3.11+
+git --version              # Should show git 2.43+
+lsb_release -a            # Confirm Ubuntu 24.04
+timedatectl               # Check timezone (important for cron scheduling)
+```
+
+### Step 2: Install Required System Packages
+
+```bash
+# Update package list
+sudo apt update
+
+# Install Python virtual environment support
+sudo apt install python3.12-venv -y
+
+# Verify installation
+python3 -m venv --help    # Should show venv help
+```
+
+### Step 3: Clone and Set Up Project
+
+```bash
+# Clone your repository (replace with your actual repo URL)
+git clone https://github.com/yourusername/crypto-slack-bot.git
+cd crypto-slack-bot
+
+# Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Verify virtual environment is active
+echo "Virtual env: $VIRTUAL_ENV"
+which pip3
+pip3 --version
+
+# Install required Python packages
+pip3 install slack-sdk python-dotenv requests
+
+# Verify installations
+pip3 list | grep -E "(slack|dotenv|requests)"
+python3 -c "
+import requests, slack_sdk
+from dotenv import load_dotenv
+print('✅ All packages imported successfully!')
+"
+```
+
+### Step 4: Configure Environment Variables
+
+Create your `.env` file with Slack credentials:
+
+```bash
+# Create .env file (replace with your actual tokens)
+cat > .env << 'EOF'
+SLACK_BOT_TOKEN="xoxb-YOUR_BOT_TOKEN_HERE"
+SLACK_APP_TOKEN="xapp-YOUR_APP_TOKEN_HERE" 
+SLACK_CHANNEL_ID="C1234567890"
+SLACK_WEBHOOK_URL="https://hooks.slack.com/services/YOUR_WEBHOOK_HERE"
+SLACK_SIGNING_SECRET="your_signing_secret_here"
+EOF
+
+# Verify .env file
+cat .env
+```
+
+### Step 5: Set Up Automated Services
+
+```bash
+# Set up cron job for daily reports at 12:00 PM GMT+7 (05:00 UTC)
+echo "0 5 * * * cd /home/ubuntu/crypto-slack-bot && /home/ubuntu/crypto-slack-bot/.venv/bin/python main.py >> /home/ubuntu/crypto-slack-bot/reports.log 2>&1" | crontab -
+
+# Verify cron job
+crontab -l
+
+# Start interactive Slack bot
+nohup python3 slack_listener.py > slack_listener.log 2>&1 &
+
+# Verify bot is running
+ps aux | grep slack_listener
+```
+
+### Step 6: Test Your Installation
+
+```bash
+# Test daily report manually
+python3 main.py
+
+# Check if bot responds to Slack commands
+# Go to your Slack channel and send: !check
+```
+
+## Bot Management Commands
+
+### Check Bot Status
+
+```bash
+# Check if interactive bot is running
+ps aux | grep slack_listener
+
+# Count how many instances are running
+ps aux | grep slack_listener | grep -v grep | wc -l
+
+# Check cron job status
+crontab -l
+
+# Check recent activity
+tail -f slack_listener.log    # Interactive bot logs
+tail -f reports.log          # Daily report logs
+```
+
+### Start/Stop/Restart Bot
+
+```bash
+# Stop all bot instances (clean shutdown)
+pkill -f slack_listener
+
+# Verify all instances stopped
+ps aux | grep slack_listener
+
+# Start ONE clean instance
+nohup python3 slack_listener.py > slack_listener.log 2>&1 &
+
+# Verify exactly ONE instance is running
+ps aux | grep slack_listener | grep -v grep
+```
+
+### Advanced Bot Management
+
+```bash
+# Kill specific bot instance by PID
+kill 5619  # Replace 5619 with actual PID
+
+# Force kill if normal kill doesn't work
+kill -9 5619
+
+# Start bot with custom log file
+nohup python3 slack_listener.py > custom_bot.log 2>&1 &
+
+# Monitor bot in real-time
+tail -f slack_listener.log
+
+# Check bot memory usage
+ps aux | grep slack_listener | awk '{print $6}'  # Memory in KB
+
+# Restart bot (complete cycle)
+pkill -f slack_listener && sleep 2 && nohup python3 slack_listener.py > slack_listener.log 2>&1 &
+```
+
+### Troubleshooting Commands
+
+```bash
+# Check if bot can connect to Slack
+python3 -c "
+from slack_sdk import WebClient
+from dotenv import load_dotenv
+import os
+load_dotenv()
+client = WebClient(token=os.getenv('SLACK_BOT_TOKEN'))
+response = client.auth_test()
+print('✅ Slack connection OK:', response['user'])
+"
+
+# Test wallet API connection
+python3 -c "
+import requests
+response = requests.get('https://apilist.tronscanapi.com/api/account/tokens?address=TNZkbytSMdaRJ79CYzv8BGK6LWNmQxcuM8', timeout=10)
+print('✅ Tronscan API OK:', response.status_code)
+"
+
+# Check virtual environment
+echo "Python path: $(which python3)"
+echo "Pip path: $(which pip3)"
+echo "Virtual env: $VIRTUAL_ENV"
+
+# Verify package versions match requirements
+pip3 list | grep -E "(slack|dotenv|requests)"
+```
 
 ## Slack App Setup
 
@@ -70,104 +255,8 @@ Real-time Slack bot that responds to user commands:
 2. Copy the **Channel ID** (format: C1234567890)
 3. Add the bot to the channel by typing `@USDT Wallet Monitor`
 
-## Installation
+## Available Commands in Slack
 
-1. **Clone the repository**
-   ```bash
-   git clone <your-repo-url>
-   cd crypto-slack-bot
-   ```
-
-2. **Create Python virtual environment**
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate  # Linux/Mac
-   # or
-   .venv\Scripts\activate     # Windows
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Configuration
-
-### Environment Variables
-
-Create a `.env` file in the project root:
-```env
-SLACK_BOT_TOKEN="xoxb-YOUR_BOT_TOKEN_HERE"
-SLACK_APP_TOKEN="xapp-YOUR_APP_TOKEN_HERE"
-SLACK_CHANNEL_ID="C1234567890"
-```
-
-### Initial Wallet Configuration
-
-Your bot starts with wallets defined in `wallets.json`. You can add/remove wallets dynamically using Slack commands or by editing this file directly:
-
-```json
-{
-  "KZP 96G1": {
-    "company": "KZP",
-    "wallet": "96G1",
-    "address": "TNZkbytSMdaRJ79CYzv8BGK6LWNmQxcuM8"
-  }
-}
-```
-
-## Usage
-
-### Quick Start (Both Services)
-
-**1. Create the startup script:**
-```bash
-nano start_bot.sh
-```
-
-**2. Copy this content into the file:**
-```bash
-#!/bin/bash
-# start_bot.sh - Start USDT Wallet Bot Services
-
-echo "🚀 Starting USDT Wallet Bot..."
-
-# Activate virtual environment
-source .venv/bin/activate
-
-# Start interactive bot in background (24/7 commands)
-echo "📡 Starting interactive command bot..."
-nohup python slack_listener.py > slack_listener.log 2>&1 &
-echo "✅ Interactive bot started (PID: $!)"
-
-# Add cron job for daily reports at noon GMT+7
-echo "📅 Setting up daily reports..."
-SCRIPT_DIR=$(pwd)
-(crontab -l 2>/dev/null | grep -v "main.py"; echo "0 5 * * * cd $SCRIPT_DIR && $SCRIPT_DIR/.venv/bin/python main.py >> $SCRIPT_DIR/reports.log 2>&1") | crontab -
-
-echo "✅ Setup complete!"
-echo ""
-echo "📊 Your bot is now running:"
-echo "  🤖 Interactive commands: 24/7 (logs: slack_listener.log)"
-echo "  📅 Daily reports: 12:00 GMT+7 (logs: reports.log)"
-echo ""
-echo "📝 Commands:"
-echo "  Check status: ps aux | grep slack_listener"
-echo "  View logs: tail -f slack_listener.log"
-echo "  Stop bot: pkill -f slack_listener"
-```
-
-**3. Make it executable and run:**
-```bash
-chmod +x start_bot.sh
-./start_bot.sh
-```
-
-**That's it! Your bot is now:**
-- 🤖 **Accepting commands 24/7** in Slack
-- 📅 **Sending daily reports** at 12:00 PM GMT+7
-
-### Available Commands in Slack
 - `!add "KZP" "KZP WDB2" "TEhmKXCPgX64yjQ3t9skuSyUQBxwaWY4KS"` - Add new wallet
 - `!remove "KZP WDB2"` - Remove wallet
 - `!check` - Check all wallet balances
@@ -175,25 +264,6 @@ chmod +x start_bot.sh
 - `!check "KZP 96G1" "KZP WDB2"` - Check multiple specific wallets
 - `!list` - List all configured wallets
 - `!help` - Show help message
-
-### Management Commands
-```bash
-# Check if bot is running
-ps aux | grep slack_listener
-
-# View logs
-tail -f slack_listener.log    # Interactive commands
-tail -f reports.log          # Daily reports
-
-# Stop bot
-pkill -f slack_listener
-
-# Restart bot
-./start_bot.sh
-
-# Test manual report
-python main.py
-```
 
 ## Sample Output
 
@@ -247,6 +317,31 @@ Notes:
 • Balance reports sent via scheduled messages
 ```
 
+## Server Migration Guide
+
+### From Development to Production Server
+
+**1. Stop Services on Old Server:**
+```bash
+# On OLD server
+pkill -f slack_listener
+crontab -r  # Remove cron jobs
+```
+
+**2. Set Up New Server:**
+```bash
+# On NEW server - follow complete installation guide above
+git clone https://github.com/yourusername/crypto-slack-bot.git
+cd crypto-slack-bot
+# ... complete steps 1-6 above
+```
+
+**3. Verify Migration:**
+```bash
+# Check only NEW server responds
+# Send !check in Slack - should get only one response
+```
+
 ## Project Structure
 
 ```
@@ -259,7 +354,6 @@ crypto-slack-bot/
 │   └── slack_commands.py      # Slack command parsing and handling
 ├── main.py                    # Scheduled reporting script
 ├── slack_listener.py          # Interactive Slack bot listener
-├── start_bot.sh              # Startup script (creates this)
 ├── requirements.txt           # Python dependencies
 ├── .env                       # Environment variables (create this)
 ├── wallets.json              # Wallet storage (auto-managed)
@@ -318,6 +412,79 @@ Key settings in `bot/config.py`:
 - **USDT_CONTRACT**: Official USDT TRC20 contract address
 - **File paths**: Configurable paths for wallets.json and CSV output
 
+## Common Issues & Solutions
+
+### Bot Not Responding to Commands
+
+**Check bot status:**
+```bash
+ps aux | grep slack_listener
+```
+
+**If not running:**
+```bash
+cd /path/to/crypto-slack-bot
+source .venv/bin/activate
+nohup python3 slack_listener.py > slack_listener.log 2>&1 &
+```
+
+**If multiple instances running:**
+```bash
+pkill -f slack_listener
+# Wait 2 seconds
+nohup python3 slack_listener.py > slack_listener.log 2>&1 &
+```
+
+### Daily Reports Not Sending
+
+**Check cron job:**
+```bash
+crontab -l
+```
+
+**If missing, add it:**
+```bash
+echo "0 5 * * * cd /home/ubuntu/crypto-slack-bot && /home/ubuntu/crypto-slack-bot/.venv/bin/python main.py >> /home/ubuntu/crypto-slack-bot/reports.log 2>&1" | crontab -
+```
+
+**Test manually:**
+```bash
+cd /path/to/crypto-slack-bot
+source .venv/bin/activate
+python3 main.py
+```
+
+### Environment Issues
+
+**Virtual environment not working:**
+```bash
+python3 -m venv .venv --clear  # Recreate venv
+source .venv/bin/activate
+pip3 install slack-sdk python-dotenv requests
+```
+
+**Package import errors:**
+```bash
+source .venv/bin/activate  # Always activate first
+pip3 install --upgrade slack-sdk python-dotenv requests
+```
+
+### Network/API Issues
+
+**Check internet connectivity:**
+```bash
+curl -I https://api.slack.com
+curl -I https://apilist.tronscanapi.com
+```
+
+**Test API endpoints:**
+```bash
+python3 -c "
+import requests
+print('Tronscan:', requests.get('https://apilist.tronscanapi.com/api/account/tokens?address=TNZkbytSMdaRJ79CYzv8BGK6LWNmQxcuM8').status_code)
+"
+```
+
 ## Development Notes
 
 - All monetary calculations use `Decimal` class for precision
@@ -326,34 +493,34 @@ Key settings in `bot/config.py`:
 - Comprehensive error handling prevents silent failures
 - Type hints improve code clarity and IDE support
 - Dynamic wallet management through JSON storage
+- Always use virtual environment to avoid system package conflicts
+- Monitor logs regularly to catch issues early
 
-## Troubleshooting
+## Performance Monitoring
 
-**Bot not responding to commands?**
 ```bash
-# Check if it's running
-ps aux | grep slack_listener
+# Check bot memory usage
+ps aux | grep slack_listener | awk '{print $6 " KB"}'
 
-# If not running, start it
-./start_bot.sh
+# Check log file sizes
+ls -lh *.log
+
+# Monitor real-time activity
+tail -f slack_listener.log
+
+# Check cron execution
+grep "main.py" /var/log/syslog | tail -5
+
+# System resource usage
+df -h  # Disk usage
+free -h  # Memory usage
 ```
 
-**Daily reports not sending?**
-```bash
-# Check cron job exists
-crontab -l
+## Security Best Practices
 
-# Test manual report
-python main.py
-```
-
-**Check logs for errors:**
-```bash
-tail -f slack_listener.log    # Interactive bot issues
-tail -f reports.log          # Daily report issues
-```
-
-**Common fixes:**
-- Make sure bot is added to Slack channel
-- Check .env file has correct tokens
-- Verify internet connection for API calls
+- Keep `.env` file secure (never commit to git)
+- Use `.gitignore` to exclude sensitive files
+- Regularly update dependencies: `pip3 install --upgrade -r requirements.txt`
+- Monitor logs for suspicious activity
+- Use specific Slack permissions (minimal required scopes)
+- Consider using SSH key authentication for git repositories
