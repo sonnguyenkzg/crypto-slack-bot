@@ -311,7 +311,3 @@ Optional:
 - **Issues**: Create GitHub issue for bugs or feature requests
 - **Documentation**: Check this README for common solutions
 - **Logs**: Monitor `slack_listener.log` and `reports.log` for debugging
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
