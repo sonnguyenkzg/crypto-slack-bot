@@ -21,14 +21,15 @@ The bot operates in two modes:
 Executes a sequential workflow for automated reports:
 1. **Balance Fetching**: Queries Tronscan API for current USDT TRC20 balances
 2. **Precision Processing**: Handles all monetary calculations using Python's Decimal class
-3. **CSV Logging**: Appends timestamped balance data with GMT+7 timezone consistency
-4. **Slack Reporting**: Sends formatted text summaries to designated channels
+3. **Slack Reporting**: Sends formatted text summaries to designated channels (identical to !check output)
 
 ### 2. Interactive Commands (slack_listener.py)
 Real-time Slack bot that responds to user commands:
-- `!add "company" "wallet" "address"` - Add new wallets
+- `!add "company" "wallet_name" "address"` - Add new wallets
 - `!remove "wallet_name"` - Remove existing wallets
-- `!check` - Check current balances on demand
+- `!check` - Check all wallet balances
+- `!check "wallet_name"` - Check specific wallet balance
+- `!check "wallet1" "wallet2"` - Check multiple specific wallets
 - `!list` - List all configured wallets
 - `!help` - Show available commands
 
@@ -51,7 +52,7 @@ Real-time Slack bot that responds to user commands:
 1. Go to **"OAuth & Permissions"** in the left sidebar
 2. Under **"Bot Token Scopes"**, add these scopes:
    - `chat:write` - Send messages to channels
-   - `files:write` - Upload files (if needed in future)
+   - `chat:write.public` - Write in public channels
 
 ### Step 3: Enable Socket Mode (for interactive commands)
 1. Go to **"Socket Mode"** in the left sidebar
@@ -167,10 +168,11 @@ chmod +x start_bot.sh
 - 📅 **Sending daily reports** at 12:00 PM GMT+7
 
 ### Available Commands in Slack
-- `!add "KZP" "WDB2" "TEhmKXCPgX64yjQ3t9skuSyUQBxwaWY4KS"` - Add new wallet
+- `!add "KZP" "KZP WDB2" "TEhmKXCPgX64yjQ3t9skuSyUQBxwaWY4KS"` - Add new wallet
 - `!remove "KZP WDB2"` - Remove wallet
 - `!check` - Check all wallet balances
 - `!check "KZP 96G1"` - Check specific wallet
+- `!check "KZP 96G1" "KZP WDB2"` - Check multiple specific wallets
 - `!list` - List all configured wallets
 - `!help` - Show help message
 
@@ -197,28 +199,52 @@ python main.py
 
 ### Scheduled Report (main.py)
 ```
-💵 USDT TRC20 Wallet Balances 💵
-As of 2025-06-09 00:00 GMT+7
+*Daily Balance Report*
 
-• KZP 96G1: 1,250.32 USDT
-• KZP BLG1: 3,418.78 USDT
-• KZP WDB1: 892.00 USDT
-
-➕ Total: 5,561.10 USDT
-```
-
-### Interactive Command Response (!check)
-```
-🤖 Wallet Balance Check
-
-💰 Balance Report (3 wallets)
+⏰ Time: 2025-06-11 12:00 GMT+7
 
 • KZP 96G1: 1,250.32 USDT
 • KZP BLG1: 3,418.78 USDT
 • KZP WDB1: 892.00 USDT
 
 📊 Total: 5,561.10 USDT
-⏰ Checked: 2025-06-09 14:30 GMT+7
+```
+
+### Interactive Command Response (!check)
+```
+⏰ Time: 2025-06-11 14:30 GMT+7
+
+• KZP 96G1: 1,250.32 USDT
+• KZP BLG1: 3,418.78 USDT
+• KZP WDB1: 892.00 USDT
+
+📊 Total: 5,561.10 USDT
+```
+
+### Help Command Response (!help)
+```
+🤖 Help - Available Commands
+
+Wallet Management:
+• !add "company" "wallet" "address" - Add new wallet
+• !remove "wallet_name" - Remove wallet  
+• !list - List all wallets
+• !check - Check all wallet balances
+• !check "wallet_name" - Check specific wallet balance
+• !check "wallet1" "wallet2" - Check multiple specific wallets
+
+Examples:
+    !add "KZP" "KZP WDB2" "TEhmKXCPgX64yjQ3t9skuSyUQBxwaWY4KS"
+    !remove "KZP WDB2"
+    !list
+    !check
+    !check "KZP 96G1"
+    !check "KZP 96G1" "KZP WDB2"
+
+Notes:
+• All arguments must be in quotes
+• TRC20 addresses start with 'T' (34 characters)
+• Balance reports sent via scheduled messages
 ```
 
 ## Project Structure

@@ -64,7 +64,7 @@ def handle_add_command(text: str) -> str:
         return f"""{error_msg}
 
 **Usage:** `!add "company" "wallet_name" "address"`
-**Example:** `!add "KZP" "WDB2" "TEhmKXCPgX64yjQ3t9skuSyUQBxwaWY4KS"`"""
+**Example:** `!add "KZP" "KZP WDB2" "TEhmKXCPgX64yjQ3t9skuSyUQBxwaWY4KS"`"""
     
     company, wallet, address = result
     
@@ -223,19 +223,19 @@ Use `!list` to see all wallets or provide TRC20 addresses directly."""
     
     if len(wallets_to_check) == 1:
         # Single wallet response
-        header = f"💰 **Wallet Balance**"
-        footer = f"\n⏰ **Checked:** {time_str} GMT+{GMT_OFFSET}"
+        time_line = f"⏰ **Time:** {time_str} GMT+{GMT_OFFSET}"
+        wallet_list = "\n".join(results)
+        message = f"{time_line}\n\n{wallet_list}"
     else:
         # Multiple wallets response
-        header = f"💰 **Balance Report** ({len(wallets_to_check)} wallet{'s' if len(wallets_to_check) > 1 else ''})"
+        time_line = f"⏰ **Time:** {time_str} GMT+{GMT_OFFSET}"
         footer = f"\n\n📊 **Total:** {total_balance:,.2f} USDT"
-        footer += f"\n⏰ **Checked:** {time_str} GMT+{GMT_OFFSET}"
         
         if successful_checks < len(wallets_to_check):
             footer += f"\n⚠️ **Note:** {len(wallets_to_check) - successful_checks} wallet(s) failed to fetch"
-    
-    wallet_list = "\n".join(results)
-    message = f"{header}\n\n{wallet_list}{footer}"
+        
+        wallet_list = "\n".join(results)
+        message = f"{time_line}\n\n{wallet_list}{footer}"
     
     return message
 
@@ -258,18 +258,21 @@ def handle_help_command() -> str:
     Returns:
         str: Help message
     """
-    return """🤖 **USDT Wallet Monitor Commands**
-
-**Wallet Management:**
+    return """**Wallet Management:**
 • `!add "company" "wallet" "address"` - Add new wallet
 • `!remove "wallet_name"` - Remove wallet  
 • `!list` - List all wallets
-• `!check` - Check wallet status
+• `!check` - Check all wallet balances
+• `!check "wallet_name"` - Check specific wallet balance
+• `!check "wallet1" "wallet2"` - Check multiple specific wallets
 
 **Examples:**
     !add "KZP" "WDB2" "TEhmKXCPgX64yjQ3t9skuSyUQBxwaWY4KS"
     !remove "KZP WDB2"
     !list
+    !check
+    !check "KZP 96G1"
+    !check "KZP 96G1" "KZP WDB2"
 
 **Notes:**
 • All arguments must be in quotes

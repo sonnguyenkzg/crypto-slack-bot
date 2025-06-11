@@ -24,3 +24,12 @@ CSV_FILE = "wallet_balances.csv"
 
 # --- Timezone ---
 GMT_OFFSET = 7  # GMT+7 timezone offset
+
+# --- Access Control ---
+# List of Slack User IDs who are authorized to use interactive commands.
+# To find a user's ID: In Slack, right-click on their name -> "Copy Link" or "View Profile"
+# The ID typically starts with 'U' followed by alphanumeric characters (e.g., "U123ABCDE").
+ALLOWED_SLACK_USERS = [
+    "U0904UHELTE",
+    "U090GBUM3HV"
+]

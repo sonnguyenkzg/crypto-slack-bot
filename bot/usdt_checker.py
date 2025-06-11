@@ -103,7 +103,7 @@ def fetch_all_usdt_balances() -> tuple[str, dict[str, Decimal]]:
     ]
 
     for name, value in balances.items():
-        lines.append(f"• `{name}`: *{value:,.2f} USDT*")
+        lines.append(f"• {name}: *{value:,.2f} USDT*")
     
     lines.append("")
     lines.append(f"➕ *Total*: *{total:,.2f} USDT*")

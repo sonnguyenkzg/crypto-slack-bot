@@ -224,7 +224,7 @@ def list_wallets() -> Tuple[bool, str]:
         companies[company].append((wallet_key, wallet_info))
     
     # Format output
-    lines = ["📋 **Current Wallets**\n"]
+    lines = []
     
     for company, wallet_list in companies.items():
         lines.append(f"**{company}:**")

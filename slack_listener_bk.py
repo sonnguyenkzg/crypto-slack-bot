@@ -14,7 +14,6 @@ from slack_sdk.socket_mode.response import SocketModeResponse
 from dotenv import load_dotenv
 
 from bot.slack_commands import handle_slack_command
-from bot.config import ALLOWED_SLACK_USERS # Import the allowed users list
 
 # Load environment variables
 load_dotenv()
@@ -151,7 +150,7 @@ class WalletCommandBot:
             is_command, command, text = self.is_command_message(message_text, user_id)
             
             if not is_command:
-                # Invalid command message (original logic remains)
+                # Invalid command message
                 self.web_client.chat_postMessage(
                     channel=channel_id,
                     text="❌ Invalid command. Use `!help` to see available commands.\n\nValid commands: `!add` `!remove` `!check` `!list` `!help`",
@@ -159,19 +158,8 @@ class WalletCommandBot:
                 )
                 print(f"⚠️ Invalid command from user: '{message_text}'")
                 return
-
-            # --- Permission Check ---
-            if user_id not in ALLOWED_SLACK_USERS:
-                print(f"⛔ Unauthorized command attempt by user {user_id} for command '{command}'")
-                self.web_client.chat_postMessage(
-                    channel=channel_id,
-                    text="⛔ You do not have the required permissions to use this command. Please contact an administrator.",
-                    mrkdwn=True
-                )
-                return # Stop processing if user is not authorized
-            # --- End Permission Check ---
             
-            print(f"📨 Processing command: {command} '{text}' from authorized user {user_id}")
+            print(f"📨 Processing command: {command} '{text}' from user {user_id}")
             
             # Process the command
             try:
@@ -233,9 +221,6 @@ class WalletCommandBot:
         print("   !list")
         print("   !help")
         print("   @CryptoBalanceBot !command (mentions also work)")
-        
-        # Add a note about authorized users
-        print(f"🔐 Only authorized users ({', '.join(ALLOWED_SLACK_USERS)}) can use management commands.")
         print()
         print("🔄 Bot is running... Press Ctrl+C to stop")
         
