@@ -622,6 +622,75 @@ git checkout WORKING_COMMIT_HASH
 pkill -f slack_listener && nohup python3 slack_listener.py > slack_listener.log 2>&1 &
 ```
 
+## Production Security Setup
+
+### Secure Production Server (5-Step Process)
+
+**Step 1: Remove Push Authentication**
+```bash
+# Remove any tokens/credentials from git remote URL
+git remote set-url origin https://github.com/yourusername/crypto-slack-bot.git
+
+# Verify the remote URL is clean (no tokens)
+git remote -v
+```
+
+**Step 2: Clear Git Credentials**
+```bash
+# Remove any stored git credentials
+git config --unset user.name
+git config --unset user.email
+git config --unset credential.helper
+
+# Clear any cached credentials
+git credential reject <<< "url=https://github.com"
+```
+
+**Step 3: Set Read-Only Identity**
+```bash
+# Set production-specific read-only identity
+git config --local user.name "PRODUCTION-READ-ONLY"
+git config --local user.email "production@readonly.local"
+
+# Verify the configuration
+git config --list | grep user
+```
+
+**Step 4: Test Security Settings**
+```bash
+# Test that pull still works (should succeed)
+git pull origin main
+
+# Test that push fails (should fail - this is what we want)
+echo "# test" >> test_security.txt
+git add test_security.txt
+git commit -m "Security test - this should not be pushable"
+git push origin main  # Should fail with authentication error
+
+# Clean up the test
+git reset --hard HEAD~1
+rm -f test_security.txt
+```
+
+**Step 5: Verify Production Security**
+```bash
+# Check that production can still:
+echo "✅ Testing production capabilities:"
+
+# 1. Pull updates (should work)
+git pull origin main && echo "✅ Can pull updates"
+
+# 2. Check status (should work)  
+git status && echo "✅ Can check status"
+
+# 3. View logs (should work)
+git log --oneline -3 && echo "✅ Can view commit history"
+
+# 4. Cannot push (should fail)
+echo "❌ Testing push (should fail for security):"
+git push origin main 2>&1 | grep -q "fatal\|error" && echo "✅ Push correctly blocked for security"
+```
+
 ## Production Security Model
 
 ### What Production Server Can Do:
@@ -629,22 +698,173 @@ pkill -f slack_listener && nohup python3 slack_listener.py > slack_listener.log 
 ✅ **`git status`** - Check repository status  
 ✅ **`git log`** - View commit history
 ✅ **`git checkout commit-hash`** - Switch versions (for rollbacks)
+✅ **Read-only operations** - Safe monitoring and deployment
 
 ### What Production Server Cannot Do:
 ❌ **`git push origin main`** - Cannot push changes (security)
 ❌ **`git commit` + push** - Cannot modify repository
+❌ **Accidental code changes** - Protected from unauthorized modifications
 
-### Production Deployment Flow:
-1. **Development server**: Make changes → Test → Commit → Push
-2. **Production server**: Pull changes → Stop services → Start services → Test
-3. **Monitor**: Check logs and Slack functionality
-4. **Rollback if needed**: Checkout previous commit and restart
+### Production Git Configuration:
+```bash
+# Production should show:
+user.name=PRODUCTION-READ-ONLY
+user.email=production@readonly.local
+remote.origin.url=https://github.com/username/repo.git  # No tokens
+```
 
-This security model ensures that:
-- All changes originate from development environment
-- Production cannot accidentally modify the codebase
-- Easy deployment of tested features
-- Quick rollback capability for issues
+## Change Management & Migration Flow
+
+### For Team Development & Production Updates
+
+#### 1. **Development Phase** (Developer's Local/Dev Server)
+```bash
+# Developer makes changes
+git checkout -b feature/new-functionality
+# Make changes, test locally
+git add . && git commit -m "Add new feature"
+git push origin feature/new-functionality
+
+# Create Pull Request on GitHub
+# Code review process
+# Merge to main after approval
+```
+
+#### 2. **Staging/Testing** (Optional but Recommended)
+```bash
+# On staging server (if available)
+git pull origin main
+# Run comprehensive tests
+# User acceptance testing
+# Performance testing
+```
+
+#### 3. **Production Deployment** (Production Server)
+```bash
+# Scheduled deployment window
+cd /home/ubuntu/crypto-slack-bot
+source .venv/bin/activate
+
+# Pre-deployment backup
+git log --oneline -1 > last_known_good.txt
+cp wallets.json wallets.json.backup
+
+# Stop services
+pkill -f slack_listener
+
+# Pull latest changes
+git pull origin main
+
+# Install any new dependencies
+pip3 install -r requirements.txt
+
+# Test configuration
+python3 -c "
+import bot.config as config
+print('✅ Config loaded successfully')
+"
+
+# Test core functionality
+python3 main.py  # Test daily report
+
+# Start services
+nohup python3 slack_listener.py > slack_listener.log 2>&1 &
+
+# Verify deployment
+ps aux | grep slack_listener
+tail -f slack_listener.log  # Monitor for errors
+
+# Test in Slack
+# Send !check command to verify functionality
+```
+
+#### 4. **Post-Deployment Monitoring**
+```bash
+# Monitor for 15-30 minutes after deployment
+tail -f slack_listener.log
+tail -f reports.log
+
+# Check system resources
+ps aux | grep python  # Memory usage
+df -h  # Disk space
+
+# Test all major functions in Slack
+# !check, !list, !help, etc.
+```
+
+#### 5. **Rollback Procedure** (If Issues Occur)
+```bash
+# Emergency rollback
+cat last_known_good.txt  # Get previous commit
+git checkout PREVIOUS_COMMIT_HASH
+
+# Restore backup if needed
+cp wallets.json.backup wallets.json
+
+# Restart services
+pkill -f slack_listener
+nohup python3 slack_listener.py > slack_listener.log 2>&1 &
+
+# Verify rollback successful
+# Test in Slack
+```
+
+### Change Management Best Practices
+
+#### **Before Any Production Change:**
+- ✅ **Test thoroughly** on development server
+- ✅ **Document changes** in commit messages
+- ✅ **Backup critical data** (wallets.json, .env)
+- ✅ **Schedule downtime** if needed (inform users)
+- ✅ **Have rollback plan** ready
+
+#### **During Deployment:**
+- ✅ **Monitor logs** in real-time
+- ✅ **Test immediately** after deployment
+- ✅ **Keep deployment window** as short as possible
+- ✅ **Have communication plan** for issues
+
+#### **After Deployment:**
+- ✅ **Monitor for 30+ minutes** for issues
+- ✅ **Test all critical functions** in Slack
+- ✅ **Document deployment** in change log
+- ✅ **Clean up backup files** after confirmed success
+
+### Multi-Environment Strategy
+
+#### **Development Environment:**
+- Full git access (push/pull)
+- Latest features and experiments
+- Frequent changes and testing
+- Connected to test Slack workspace (optional)
+
+#### **Production Environment:**
+- Read-only git access (pull only)
+- Stable, tested code only
+- Minimal changes, scheduled deployments
+- Connected to live Slack workspace
+- Monitoring and alerting
+
+#### **Emergency Procedures:**
+```bash
+# Emergency stop (production issues)
+pkill -f slack_listener
+
+# Emergency rollback (bad deployment)
+git checkout LAST_KNOWN_GOOD_COMMIT
+pkill -f slack_listener
+nohup python3 slack_listener.py > slack_listener.log 2>&1 &
+
+# Emergency contact
+# Have team communication plan ready
+```
+
+This change management process ensures:
+- **No unauthorized changes** to production
+- **Tested deployments** with rollback capability
+- **Minimal downtime** during updates
+- **Clear audit trail** of all changes
+- **Professional deployment practices**
 
 ## Development Notes
 
