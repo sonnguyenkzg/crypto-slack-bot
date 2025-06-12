@@ -230,7 +230,7 @@ def list_wallets() -> Tuple[bool, str]:
         lines.append(f"**{company}:**")
         for wallet_key, wallet_info in wallet_list:
             address = wallet_info.get('address', 'Unknown')
-            lines.append(f"• {wallet_key}: {address}")
+            lines.append(f"• **{wallet_key}**: {address}")
         lines.append("")  # Empty line between companies
     
     lines.append(f"**Total Wallets:** {len(wallets)}")

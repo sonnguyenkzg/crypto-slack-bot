@@ -8,19 +8,17 @@ from bot.slack_commands import handle_check_command
 import re
 
 def fix_slack_formatting(text):
-    """Fix markdown formatting for scheduled messages to match !check exactly"""
+    """Fix Slack markdown: bold wallet names, preserve bullets as dots"""
     # Add bold title at the top
     text = ":moneybag: *Daily Balance Report*\n\n" + text
-    
-    # Fix Time line: **Time:** -> *Time:*
+
+    # Fix Time and Total line
     text = re.sub(r'\*\*Time:\*\*', '*Time:*', text)
-    
-    # Fix Total line: **Total:** -> *Total:*
     text = re.sub(r'\*\*Total:\*\*', '*Total:*', text)
-    
-    # Fix wallet names: `wallet_name`: **amount** -> `wallet_name`: amount
-    text = re.sub(r'`([^`]+)`:\s*\*\*([^*]+)\*\*', r'`\1`: \2', text)
-    
+
+    # Format wallet lines: make wallet name bold
+    text = re.sub(r'•\s*\*\*([^*]+?)\*\*:\s*([0-9.,]+ USDT)', r'• *\1*: \2', text)
+
     return text
 
 def run_bot():

@@ -205,13 +205,13 @@ Use `!list` to see all wallets or provide TRC20 addresses directly."""
         try:
             balance = get_usdt_trc20_balance(address)
             if balance is not None:
-                results.append(f"• `{display_name}`: **{balance:,.2f} USDT**")
+                results.append(f"• **{display_name}**: {balance:,.2f} USDT")
                 total_balance += balance
                 successful_checks += 1
             else:
-                results.append(f"• `{display_name}`: ❌ Unable to fetch balance")
+                results.append(f"• **{display_name}**: ❌ Unable to fetch balance")
         except Exception as e:
-            results.append(f"• `{display_name}`: ❌ Error: {str(e)[:50]}...")
+            results.append(f"• **{display_name}**: ❌ Error: {str(e)[:50]}...")
     
     # Handle no successful checks
     if successful_checks == 0:
