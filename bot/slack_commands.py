@@ -123,6 +123,7 @@ def handle_check_command(text: str) -> str:
     """
     Handle !check command.
     Accepts wallet names OR addresses for maximum user convenience.
+    Robust parsing that handles bold text, markdown, and various quote formats.
     
     Args:
         text: Command arguments from Slack (optional wallet names/addresses)
@@ -140,23 +141,43 @@ def handle_check_command(text: str) -> str:
         # Check all wallets
         wallets_to_check = {name: info['address'] for name, info in wallet_data.items()}
     else:
-        # Parse quoted inputs (names or addresses)
-        quoted_pattern = r'"([^"]*)"'
-        inputs = re.findall(quoted_pattern, text.strip())
+        # Clean the text first - remove markdown formatting
+        cleaned_text = text.strip()
         
+        # Remove common markdown patterns that might interfere
+        cleaned_text = re.sub(r'\*\*([^*]+)\*\*', r'\1', cleaned_text)  # Remove **bold**
+        cleaned_text = re.sub(r'\*([^*]+)\*', r'\1', cleaned_text)      # Remove *italic*
+        cleaned_text = re.sub(r'`([^`]+)`', r'\1', cleaned_text)        # Remove `code`
+        
+        # Try multiple quote patterns to be more robust
+        inputs = []
+        
+        # Pattern 1: Standard double quotes
+        standard_quotes = re.findall(r'"([^"]*)"', cleaned_text)
+        if standard_quotes:
+            inputs.extend(standard_quotes)
+        
+        # Pattern 2: Smart quotes (in case Slack converts them)
+        smart_quotes = re.findall(r'"([^"]*)"', cleaned_text)
+        if smart_quotes:
+            inputs.extend(smart_quotes)
+        
+        # If no quoted inputs found, return error - NO FALLBACK
         if not inputs:
-            return """❌ Invalid format. Use quotes around wallet names or addresses.
+            return f"""❌ No valid wallet names or addresses found in: `{text}`
 
 **Usage:**
 • `!check` - Check all wallets
-• `!check "wallet_name"` - Check by wallet name
+• `!check "wallet_name"` - Check by wallet name  
 • `!check "TRC20_address"` - Check by address
-• `!check "wallet1" "TRC20_address"` - Mix names and addresses
+• `!check "wallet1" "wallet2"` - Multiple wallets
+
+**Available wallet names:**
+{', '.join(list(wallet_data.keys())[:5])}{'...' if len(wallet_data) > 5 else ''}
 
 **Examples:**
-• `!check "KZP 96G1"`
-• `!check "TNZkbytSMdaRJ79CYzv8BGK6LWNmQxcuM8"`
-• `!check "KZP 96G1" "TARvAP993BSFBuQhjc8oG4gviskNDRtB7Z"`"""
+• `!check "KZP WDB1"`
+• `!check "TNZkbytSMdaRJ79CYzv8BGK6LWNmQxcuM8"`"""
         
         # Resolve inputs to {display_name: address}
         wallets_to_check = {}
@@ -164,7 +185,9 @@ def handle_check_command(text: str) -> str:
         
         for input_str in inputs:
             input_str = input_str.strip()
-            
+            if not input_str:
+                continue
+                
             # Check if input is a TRC20 address
             if validate_trc20_address(input_str):
                 # It's an address - find the wallet name or use address as display
@@ -181,10 +204,15 @@ def handle_check_command(text: str) -> str:
                     wallets_to_check[display_name] = input_str
             
             else:
-                # It's a wallet name - find the address
-                if input_str in wallet_data:
-                    wallets_to_check[input_str] = wallet_data[input_str]['address']
-                else:
+                # It's a wallet name - find the address (case-insensitive matching)
+                found_wallet = False
+                for wallet_name, wallet_info in wallet_data.items():
+                    if wallet_name.lower() == input_str.lower():
+                        wallets_to_check[wallet_name] = wallet_info['address']
+                        found_wallet = True
+                        break
+                
+                if not found_wallet:
                     not_found.append(input_str)
         
         # Report any wallet names not found
@@ -238,7 +266,6 @@ Use `!list` to see all wallets or provide TRC20 addresses directly."""
         message = f"{time_line}\n\n{wallet_list}{footer}"
     
     return message
-
 
 def handle_list_command() -> str:
     """
