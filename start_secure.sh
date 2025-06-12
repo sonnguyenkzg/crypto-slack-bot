@@ -15,8 +15,8 @@ echo "✅ Bot started with PID: $!"
 
 # Setup cron for daily reports
 SCRIPT_DIR=$(pwd)
-(crontab -l 2>/dev/null | grep -v "main.py"; echo "0 5 * * * sudo -E bash -c 'source /opt/usdt-bot-secrets/config && cd $SCRIPT_DIR && $SCRIPT_DIR/.venv/bin/python main.py' >> $SCRIPT_DIR/reports.log 2>&1") | crontab -
+(crontab -l 2>/dev/null | grep -v "main.py"; echo "0 17 * * * sudo -E bash -c 'source /opt/usdt-bot-secrets/config && cd $SCRIPT_DIR && $SCRIPT_DIR/.venv/bin/python main.py' >> $SCRIPT_DIR/reports.log 2>&1") | crontab -
 
-echo "📅 Daily reports scheduled"
+echo "📅 Daily reports scheduled (12:00 AM GMT+7)"
 echo ""
 echo "✅ Setup complete! Bot is running securely."
