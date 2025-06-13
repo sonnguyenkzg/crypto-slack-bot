@@ -3,8 +3,8 @@
 
 echo "🔐 Loading secrets..."
 
-# Get absolute paths
-SCRIPT_DIR="/home/azureuser/crypto-slack-bot"
+# Get absolute paths (dynamic, works for any user)
+SCRIPT_DIR="$(pwd)"
 VENV_PYTHON="$SCRIPT_DIR/.venv/bin/python"
 
 # Start bot in background with environment loaded
