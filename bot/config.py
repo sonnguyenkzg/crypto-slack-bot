@@ -6,7 +6,8 @@ Environment variables and system settings.
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Load environment variables from .env file (fallback)
+# This will be skipped if environment variables are already set
 load_dotenv()
 
 # --- Slack API Credentials ---
