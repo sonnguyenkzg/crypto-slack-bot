@@ -3,8 +3,6 @@
 Send daily !check report to Slack at noon GMT+7
 """
 from slack_sdk import WebClient
-from bot.config import SLACK_BOT_TOKEN, SLACK_CHANNEL_ID
-from bot.slack_commands import handle_check_command
 import re
 
 def fix_slack_formatting(text):
@@ -22,6 +20,10 @@ def fix_slack_formatting(text):
     return text
 
 def run_bot():
+    # Import config INSIDE the function (after secure secrets can load)
+    from bot.config import SLACK_BOT_TOKEN, SLACK_CHANNEL_ID
+    from bot.slack_commands import handle_check_command
+    
     # Get the exact same output as !check command
     message = handle_check_command("")
     
