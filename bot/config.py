@@ -69,10 +69,18 @@ CSV_FILE = "wallet_balances.csv"
 GMT_OFFSET = 7  # GMT+7 timezone offset
 
 # --- Access Control ---
-ALLOWED_SLACK_USERS = [
-    "U0904UHELTE",# son_developer
-    "U090U17T94G",# son0004@kzgroup.biz
-    "U090GBUM3HV",# Estelle
-    "U0918U4HSD6",# Daniela
-    "U090GBYU971" # Sam
-]
+if os.getenv('ENVIRONMENT') == 'prod':
+    ALLOWED_SLACK_USERS = [
+        "U08V5JXD84C",# son0004@kzgroup.biz
+        "U08TP7RP2NM",# Estelle
+        "U080EAXBDHC",# Daniela
+        "U080JHRANCR" # Sam
+    ]
+else:
+    ALLOWED_SLACK_USERS = [
+        "U0904UHELTE",# son_developer
+        "U090U17T94G",# son0004@kzgroup.biz
+        "U090GBUM3HV",# Estelle
+        "U0918U4HSD6",# Daniela
+        "U090GBYU971" # Sam
+    ]
