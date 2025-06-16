@@ -1,4 +1,4 @@
-# USDT Wallet Monitor Bot
+# Crypto/USDT Wallet Monitor Bot
 
 A smart Slack bot that automatically tracks USDT (cryptocurrency) wallet balances and sends daily reports to your team. Perfect for businesses managing multiple crypto wallets across different locations or purposes.
 
@@ -16,21 +16,21 @@ A smart Slack bot that automatically tracks USDT (cryptocurrency) wallet balance
 Every day at 12:00 AM GMT+7 (midnight), the bot automatically sends a balance summary to your Slack channel:
 
 ```
-:moneybag: Daily Balance Report
+💰 Daily Balance Report
 
-⏰ Time: 2025-06-16 13:32 GMT+7
+⏰ Time: 2025-06-15 00:00 GMT+7
 
 • KZP 96G1: 0.00 USDT
 • KZP BLG1: 0.00 USDT  
 • KZP WDB1: 0.00 USDT
-• KZP TH 1: 63,966.72 USDT
-• KZP TH Y 1: 25,016.48 USDT
-• KZP TH BM 1: 669.72 USDT
+• KZP TH 1: 69,466.72 USDT
+• KZP TH Y 1: 25,015.48 USDT
+• KZP TH BM 1: 28.59 USDT
 • KZP PH 1: 0.00 USDT
-• KZP PH BM 1: 108.74 USDT
+• KZP PH BM 1: 0.74 USDT
 • KZP KZO1: 0.00 USDT
 
-📊 Total: 89,761.66 USDT
+📊 Total: 94,511.53 USDT
 ```
 
 ### Interactive Commands (On-Demand)
