@@ -1,313 +1,228 @@
-# USDT Wallet Balance Slack Bot
+# USDT Wallet Monitor Bot
 
-A Python bot that automatically monitors multiple USDT TRC20 wallet balances using the Tronscan API and delivers reports to Slack channels. Features dynamic wallet management through Slack commands and automated daily reporting.
+A smart Slack bot that automatically tracks USDT (cryptocurrency) wallet balances and sends daily reports to your team. Perfect for businesses managing multiple crypto wallets across different locations or purposes.
 
-## Features
+## What Does This Bot Do?
 
-- **Multi-wallet USDT TRC20 tracking**: Monitor balances across multiple configured wallets
-- **Automated daily reports**: Scheduled balance summaries sent to Slack at 12:00 PM GMT+7
-- **Interactive Slack commands**: Real-time wallet management and balance checking
-- **Dynamic wallet management**: Add/remove wallets via Slack commands
-- **Historical logging**: Automatic balance history with timestamps
-- **Robust error handling**: Comprehensive exception handling for reliable operation
+**Automatic Monitoring**: Checks your USDT wallet balances 24/7 and sends daily summary reports  
+**Real-Time Commands**: Ask for balance updates anytime by mentioning the bot in Slack  
+**Historical Tracking**: Keeps a record of all balance changes in a CSV file  
+**Secure & Private**: Only authorized team members can use wallet commands  
+**Easy Management**: Add or remove wallets directly through Slack commands  
 
-## Quick Start
+## How It Works
 
-### Prerequisites
-- Ubuntu 24.04 LTS server
-- Python 3.11+ (usually pre-installed)
-- Slack workspace with bot permissions
+### Daily Reports (Automatic)
+Every day at 12:00 AM GMT+7 (midnight), the bot automatically sends a balance summary to your Slack channel:
 
-### 1. Installation
+```
+:moneybag: Daily Balance Report
+
+⏰ Time: 2025-06-16 13:32 GMT+7
+
+• KZP 96G1: 0.00 USDT
+• KZP BLG1: 0.00 USDT  
+• KZP WDB1: 0.00 USDT
+• KZP TH 1: 63,966.72 USDT
+• KZP TH Y 1: 25,016.48 USDT
+• KZP TH BM 1: 669.72 USDT
+• KZP PH 1: 0.00 USDT
+• KZP PH BM 1: 108.74 USDT
+• KZP KZO1: 0.00 USDT
+
+📊 Total: 89,761.66 USDT
+```
+
+### Interactive Commands (On-Demand)
+Mention the bot in Slack to get instant updates or manage wallets:
+
+- `@bot !check` - See all current balances
+- `@bot !check "Store1"` - Check specific wallet
+- `@bot !list` - Show all configured wallets
+- `@bot !add "Company" "WalletName" "Address"` - Add new wallet
+- `@bot !remove "WalletName"` - Remove wallet
+- `@bot !help` - Show all commands
+
+## Setup Guide
+
+### Step 1: Create Your Slack App
+
+1. **Go to Slack API**: Visit https://api.slack.com/apps
+2. **Create New App**: Click "Create New App" → "From scratch"
+3. **Name Your App**: Enter "KZG_CryptoBalanceBot_PROD" and select your workspace
+
+### Step 2: Configure App Permissions
+
+1. **OAuth & Permissions**: In the left sidebar, click "OAuth & Permissions"
+2. **Add Bot Scopes**:
+   - `chat:write` (send messages)
+   - `app_mentions:read` (respond when mentioned)
+
+### Step 3: Enable Interactive Features
+
+1. **Socket Mode**: In the left sidebar, enable "Socket Mode"
+2. **Generate App Token**: Create an App-Level Token with `connections:write` scope
+3. **Save the Token**: Copy and save this token (starts with `xapp-`)
+
+### Step 4: Install to Your Workspace
+
+1. **Install App**: Go back to "OAuth & Permissions" and click "Install to Workspace"
+2. **Authorize**: Grant the requested permissions
+3. **Copy Bot Token**: Save the "Bot User OAuth Token" (starts with `xoxb-`)
+
+### Step 5: Get Your Channel ID
+
+1. **Find Your Channel**: Right-click your target Slack channel
+2. **View Details**: Select "View channel details"
+3. **Copy Channel ID**: Look for the Channel ID (format: C1234567890)
+4. **Add Bot**: Type `@KZG_CryptoBalanceBot_PROD` in the channel to add the bot
+
+## Installation
+
+### Download and Setup
+
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/crypto-slack-bot.git
-cd crypto-slack-bot
+# Download the project
+git clone <your-repo-url>
+cd usdt-wallet-bot
 
-# Set up Python environment
-sudo apt update && sudo apt install python3.12-venv -y
+# Create virtual environment
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install dependencies
-pip3 install slack-sdk python-dotenv requests
+# Install required packages
+pip install -r requirements.txt
 ```
 
-### 2. Configuration
-```bash
-# Create environment file
-cat > .env << 'EOF'
-SLACK_BOT_TOKEN="xoxb-YOUR_BOT_TOKEN_HERE"
-SLACK_APP_TOKEN="xapp-YOUR_APP_TOKEN_HERE"
+### Configure Your Settings
+
+Create a `.env` file in the project folder:
+
+```env
+SLACK_BOT_TOKEN="xoxb-your-bot-token-here"
+SLACK_APP_TOKEN="xapp-your-app-token-here"  
 SLACK_CHANNEL_ID="C1234567890"
-EOF
 ```
 
-### 3. Start Services
+### Start the Bot
+
+Make the startup script executable and run it:
+
 ```bash
-# Set up daily reports (12:00 PM GMT+7)
-echo "0 5 * * * cd $(pwd) && $(pwd)/.venv/bin/python main.py >> $(pwd)/reports.log 2>&1" | crontab -
-
-# Start interactive bot
-nohup python3 slack_listener.py > slack_listener.log 2>&1 &
-
-# Verify running
-ps aux | grep slack_listener
+chmod +x start_secure.sh
+./start_secure.sh
 ```
 
-### 4. Test in Slack
+That's it! Your bot is now:
+- Running 24/7 and responding to commands
+- Sending daily reports at 12:00 AM GMT+7 (midnight)
+- Keeping historical records in CSV format
+
+## Using the Bot
+
+### Adding Your First Wallet
+
+In Slack, mention the bot and use the add command:
+
 ```
-!help     # Show available commands
-!check    # Check all wallet balances
-!list     # List configured wallets
+@bot !add "MyCompany" "MainStore" "TNZkbytSMdaRJ79CYzv8BGK6LWNmQxcuM8"
 ```
 
-## Slack Commands
+### Checking Balances
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `!check` | Check all wallet balances | `!check` |
-| `!check "wallet"` | Check specific wallet | `!check "KZP 96G1"` |
-| `!add "company" "wallet" "address"` | Add new wallet | `!add "KZP" "WDB2" "TEhm..."` |
-| `!remove "wallet"` | Remove wallet | `!remove "KZP WDB2"` |
-| `!list` | List all wallets | `!list` |
-| `!help` | Show help message | `!help` |
+```
+@bot !check                    # All wallets
+@bot !check "MainStore"        # Specific wallet  
+@bot !list                     # Show all wallets
+```
 
-## Management Commands
+### Managing Wallets
 
-### Check Status
+```
+@bot !remove "MainStore"       # Remove a wallet
+@bot !help                     # Show all commands
+```
+
+## Security Features
+
+- **User Authorization**: Only pre-approved team members can use commands
+- **Secure Token Storage**: Supports secure credential management in production
+- **Read-Only Access**: Bot only reads wallet balances, cannot make transactions
+- **Channel Restrictions**: Bot only works in your designated channel
+
+## File Structure
+
+```
+usdt-wallet-bot/
+├── bot/                      # Core bot modules
+├── main.py                   # Daily report scheduler  
+├── slack_listener.py         # Interactive command handler
+├── start_secure.sh          # Safe startup script
+├── .env                     # Your tokens (create this)
+├── wallets.json            # Wallet storage (auto-created)
+├── wallet_balances.csv     # Historical data (auto-created)
+└── README.md               # This guide
+```
+
+## Monitoring and Maintenance
+
+### Check Bot Status
 ```bash
-# Check if bot is running
-ps aux | grep slack_listener
-
-# View recent activity
-tail -f slack_listener.log    # Interactive bot logs
-tail -f reports.log          # Daily report logs
+ps aux | grep slack_listener  # See if bot is running
+tail -f slack_listener.log    # View command logs
+tail -f reports.log          # View daily report logs
 ```
 
 ### Restart Bot
 ```bash
-# Stop and restart
-pkill -f slack_listener
-nohup python3 slack_listener.py > slack_listener.log 2>&1 &
+./start_secure.sh            # Safely restart (stops old instances first)
 ```
 
-### Update Bot
+### Stop Bot
 ```bash
-# Pull latest changes
-git pull origin main
-
-# Restart services
-pkill -f slack_listener
-nohup python3 slack_listener.py > slack_listener.log 2>&1 &
-```
-
-## Slack App Setup
-
-### Step 1: Create Slack App
-1. Go to https://api.slack.com/apps
-2. Click **"Create New App"** → **"From scratch"**
-3. Enter App Name: `USDT Wallet Monitor`
-4. Select your workspace
-
-### Step 2: Configure Permissions
-1. **OAuth & Permissions** → **Bot Token Scopes**:
-   - `chat:write` - Send messages
-   - `chat:write.public` - Write in public channels
-
-### Step 3: Enable Socket Mode
-1. **Socket Mode** → Enable Socket Mode
-2. Generate **App-Level Token** with `connections:write` scope
-3. Save token (starts with `xapp-`)
-
-### Step 4: Install to Workspace
-1. **OAuth & Permissions** → **Install to Workspace**
-2. Copy **Bot User OAuth Token** (starts with `xoxb-`)
-3. Add bot to your channel: `@USDT Wallet Monitor`
-
-## Sample Output
-
-### Daily Report
-```
-*Daily Balance Report*
-
-⏰ Time: 2025-06-11 12:00 GMT+7
-
-• KZP 96G1: 1,250.32 USDT
-• KZP BLG1: 3,418.78 USDT
-• KZP WDB1: 892.00 USDT
-
-📊 Total: 5,561.10 USDT
-```
-
-### Interactive Command (!check)
-```
-⏰ Time: 2025-06-11 14:30 GMT+7
-
-• KZP 96G1: 1,250.32 USDT
-• KZP BLG1: 3,418.78 USDT
-• KZP WDB1: 892.00 USDT
-
-📊 Total: 5,561.10 USDT
+pkill -f slack_listener      # Stop the bot
 ```
 
 ## Troubleshooting
 
-### Bot Not Responding
-```bash
-# Check if running
-ps aux | grep slack_listener
+**Bot not responding?**
+- Check if it's running: `ps aux | grep slack_listener`
+- Restart with: `./start_secure.sh`
+- Check logs: `tail -f slack_listener.log`
 
-# If not running, start it
-source .venv/bin/activate
-nohup python3 slack_listener.py > slack_listener.log 2>&1 &
-```
+**Daily reports not coming?**
+- Check cron job: `crontab -l`
+- Test manually: `python main.py`
+- Check logs: `tail -f reports.log`
 
-### Daily Reports Not Sending
-```bash
-# Check cron job
-crontab -l
+**Permission denied errors?**
+- Make sure your user ID is in the authorized list
+- Contact your administrator to add you
 
-# Test manual report
-source .venv/bin/activate
-python3 main.py
-```
+**Commands not working?**
+- Always mention the bot: `@bot !command`
+- Use quotes around wallet names: `!check "My Wallet"`
+- Check available wallets: `@bot !list`
 
-### Multiple Bot Instances
-```bash
-# Stop all instances
-pkill -f slack_listener
+## What Wallets Are Supported?
 
-# Start one clean instance
-source .venv/bin/activate
-nohup python3 slack_listener.py > slack_listener.log 2>&1 &
-```
+This bot works with **USDT TRC20** wallets only. These are USDT tokens on the Tron blockchain. Wallet addresses start with 'T' and are 34 characters long.
 
-## Project Structure
+Examples of compatible addresses:
+- TNZkbytSMdaRJ79CYzv8BGK6LWNmQxcuM8
+- TARvAP993BSFBuQhjc8oG4gviskNDRtB7Z
 
-```
-crypto-slack-bot/
-├── bot/                    # Core bot modules
-├── main.py                # Daily reporting script
-├── slack_listener.py      # Interactive Slack bot
-├── requirements.txt       # Python dependencies
-├── .env                   # Environment variables (create this)
-├── wallets.json          # Wallet storage (auto-managed)
-├── *.log                 # Log files (auto-generated)
-└── README.md             # This file
-```
+## Need Help?
 
----
+- Use `@bot !help` in Slack for command reference
+- Check the logs if something isn't working
+- Make sure your wallet addresses are valid TRC20 addresses
+- Verify your Slack tokens are correct in the `.env` file
 
-## For Developers
+## Technical Details
 
-### Development Workflow
-1. **Make changes** on development server
-2. **Test thoroughly** before deployment
-3. **Commit and push** to GitHub
-4. **Deploy to production** using `git pull`
-
-### Production Security
-- Production server has **read-only** access to repository
-- Cannot push changes back (security feature)
-- Can only pull updates from development
-
-### Adding New Features
-```bash
-# Development server
-git checkout -b feature/new-command
-# Make changes, test
-git commit -m "Add new command"
-git push origin feature/new-command
-
-# Production server (after merge)
-git pull origin main
-pkill -f slack_listener
-nohup python3 slack_listener.py > slack_listener.log 2>&1 &
-```
-
-## Advanced Configuration
-
-<details>
-<summary>Click to expand advanced topics</summary>
-
-### Production Security Setup
-
-**Step 1: Secure Git Access**
-```bash
-# Remove push authentication
-git remote set-url origin https://github.com/username/crypto-slack-bot.git
-git config --unset user.name
-git config --unset user.email
-```
-
-**Step 2: Set Read-Only Identity**
-```bash
-git config --local user.name "PRODUCTION-READ-ONLY"
-git config --local user.email "production@readonly.local"
-```
-
-**Step 3: Verify Security**
-```bash
-git pull origin main     # ✅ Should work
-git push origin main     # ❌ Should fail (security)
-```
-
-### Change Management
-
-**Development Phase:**
-- Make changes on development server
-- Test all functionality thoroughly
-- Use feature branches for complex changes
-
-**Deployment Phase:**
-```bash
-# Production deployment checklist
-cd /path/to/crypto-slack-bot
-source .venv/bin/activate
-pkill -f slack_listener
-git pull origin main
-pip3 install -r requirements.txt  # If dependencies changed
-python3 main.py  # Test functionality
-nohup python3 slack_listener.py > slack_listener.log 2>&1 &
-# Test in Slack
-```
-
-**Rollback Procedure:**
-```bash
-git log --oneline -5  # Find previous working commit
-git checkout PREVIOUS_COMMIT_HASH
-pkill -f slack_listener
-nohup python3 slack_listener.py > slack_listener.log 2>&1 &
-```
-
-### Environment Variables
-
-Required in `.env` file:
-- `SLACK_BOT_TOKEN` - Bot User OAuth Token
-- `SLACK_APP_TOKEN` - App-Level Token  
-- `SLACK_CHANNEL_ID` - Target channel ID
-
-Optional:
-- `SLACK_WEBHOOK_URL` - Alternative webhook URL
-- `SLACK_SIGNING_SECRET` - For webhook verification
-
-### API Details
-
-**Tronscan API:**
-- Endpoint: `https://apilist.tronscanapi.com/api/account/tokens`
-- USDT Contract: `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t`
-- Timeout: 10 seconds per request
-
-**Slack API:**
-- Uses Slack SDK with WebClient and SocketModeClient
-- Real-time events via Socket Mode
-- Text messages via `chat_postMessage`
-
-</details>
-
-## Support
-
-- **Issues**: Create GitHub issue for bugs or feature requests
-- **Documentation**: Check this README for common solutions
-- **Logs**: Monitor `slack_listener.log` and `reports.log` for debugging
+- **API**: Uses Tronscan API for balance checking
+- **Timezone**: All timestamps in GMT+7 
+- **Data**: Stores balance history in CSV format
+- **Precision**: Uses Python Decimal for accurate calculations
+- **Architecture**: Modular design for easy maintenance
