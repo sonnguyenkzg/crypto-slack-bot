@@ -71,7 +71,7 @@ GMT_OFFSET = 7  # GMT+7 timezone offset
 # --- Access Control ---
 if os.getenv('ENVIRONMENT') == 'prod':
     ALLOWED_SLACK_USERS = [
-        "U08V5JXD84C",# son0004@kzgroup.biz
+        # "U08V5JXD84C",# son0004@kzgroup.biz
         "U08TP7RP2NM",# Estelle
         "U080EAXBDHC",# Daniela
         "U080JHRANCR" # Sam
