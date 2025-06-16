@@ -130,7 +130,13 @@ class WalletCommandBot:
             event = req.payload.get("event", {})
             event_type = event.get("type")
             
-            if event_type != "message":
+            # DEBUG: Print what we're receiving
+            print(f"🔍 DEBUG: Received event type: {event_type}")
+            print(f"🔍 DEBUG: Full event data: {event}")
+            
+            # Handle both message and app_mention events
+            if event_type not in ["message", "app_mention"]:
+                print(f"🔍 DEBUG: Ignoring event type: {event_type}")
                 return
             
             # Get message details
@@ -139,28 +145,49 @@ class WalletCommandBot:
             message_text = event.get("text", "")
             subtype = event.get("subtype")
             
+            print(f"🔍 DEBUG: Channel: {channel_id}, User: {user_id}, Text: '{message_text}'")
+            print(f"🔍 DEBUG: Target channel: {SLACK_CHANNEL_ID}")
+            print(f"🔍 DEBUG: Bot user ID: {self.bot_user_id}")
+            
             # Skip bot messages
             if subtype == "bot_message" or user_id == self.bot_user_id:
+                print(f"🔍 DEBUG: Skipping bot message")
                 return
             
             # Only process messages from our target channel
             if channel_id != SLACK_CHANNEL_ID:
+                print(f"🔍 DEBUG: Wrong channel - ignoring")
                 return
             
             # Check if this is a command
             is_command, command, text = self.is_command_message(message_text, user_id)
+            print(f"🔍 DEBUG: Command check result - is_command: {is_command}, command: {command}, text: '{text}'")
             
             if not is_command:
-                # Invalid command message (original logic remains)
-                self.web_client.chat_postMessage(
-                    channel=channel_id,
-                    text="❌ Invalid command. Use `!help` to see available commands.\n\nValid commands: `!add` `!remove` `!check` `!list` `!help`",
-                    mrkdwn=True
-                )
-                print(f"⚠️ Invalid command from user: '{message_text}'")
-                return
+                # For app_mention events, if no valid command found, show help
+                if event_type == "app_mention":
+                    print(f"🔍 DEBUG: No valid command in app_mention - sending help")
+                    self.web_client.chat_postMessage(
+                        channel=channel_id,
+                        text="🤖 Hi! Please use a valid command after mentioning me.\n\nUse `@bot !help` to see available commands.",
+                        mrkdwn=True
+                    )
+                    return
+                
+                # For regular messages (if channels:history is available), show invalid command message
+                if event_type == "message":
+                    print(f"🔍 DEBUG: Invalid command in regular message")
+                    self.web_client.chat_postMessage(
+                        channel=channel_id,
+                        text="❌ Invalid command. Use `!help` to see available commands.\n\nValid commands: `!add` `!remove` `!check` `!list` `!help`",
+                        mrkdwn=True
+                    )
+                    print(f"⚠️ Invalid command from user: '{message_text}'")
+                    return
 
             # --- Permission Check ---
+            print(f"🔍 DEBUG: Checking permissions for user {user_id}")
+            print(f"🔍 DEBUG: Allowed users: {ALLOWED_SLACK_USERS}")
             if user_id not in ALLOWED_SLACK_USERS:
                 print(f"⛔ Unauthorized command attempt by user {user_id} for command '{command}'")
                 self.web_client.chat_postMessage(
@@ -171,7 +198,7 @@ class WalletCommandBot:
                 return # Stop processing if user is not authorized
             # --- End Permission Check ---
             
-            print(f"📨 Processing command: {command} '{text}' from authorized user {user_id}")
+            print(f"📨 Processing {event_type} command: {command} '{text}' from authorized user {user_id}")
             
             # Process the command
             try:
@@ -214,7 +241,7 @@ class WalletCommandBot:
             print(f"❌ Error in message handler: {e}")
             import traceback
             traceback.print_exc()
-    
+            
     def start(self):
         """Start the bot listener."""
         if not self.bot_user_id:
