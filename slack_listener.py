@@ -2,7 +2,7 @@
 # slack_listener.py
 """
 Slack message listener for wallet commands.
-Listens for messages in the crypto-wallet-report channel and responds to commands.
+Mention-only mode - bot only responds when directly mentioned.
 """
 import os
 import time
@@ -14,7 +14,7 @@ from slack_sdk.socket_mode.response import SocketModeResponse
 from dotenv import load_dotenv
 
 from bot.slack_commands import handle_slack_command
-from bot.config import ALLOWED_SLACK_USERS # Import the allowed users list
+from bot.config import ALLOWED_SLACK_USERS
 
 # Load environment variables
 load_dotenv()
@@ -46,13 +46,13 @@ class WalletCommandBot:
             print(f"❌ Failed to authenticate bot: {e}")
             self.bot_user_id = None
     
-    def is_command_message(self, message: str, user_id: str) -> tuple:
+    def parse_mention_command(self, message: str, user_id: str) -> tuple:
         """
-        Check if message is a valid command for the bot.
-        Only accepts !command format.
+        Parse command from bot mention message.
+        Only processes messages that mention the bot.
         
         Args:
-            message: Message text
+            message: Full message text including mention
             user_id: User ID who sent the message
             
         Returns:
@@ -62,39 +62,30 @@ class WalletCommandBot:
         if user_id == self.bot_user_id:
             return False, None, None
         
-        # Check for direct !command format
-        if message.strip().startswith('!'):
-            parts = message.strip()[1:].split(' ', 1)
-            cmd = parts[0].lower()
-            if cmd in VALID_COMMANDS:
-                command = f"!{cmd}"
-                text = parts[1] if len(parts) > 1 else ""
-                return True, command, text.strip()
+        # Must contain bot mention
+        if f'<@{self.bot_user_id}>' not in message:
+            return False, None, None
         
-        # Check for bot mentions with !command
-        if f'<@{self.bot_user_id}>' in message:
-            # Remove the mention and check for !command
-            clean_message = message.replace(f'<@{self.bot_user_id}>', '').strip()
-            if clean_message.startswith('!'):
-                parts = clean_message[1:].split(' ', 1)
-                cmd = parts[0].lower()
-                if cmd in VALID_COMMANDS:
-                    command = f"!{cmd}"
-                    text = parts[1] if len(parts) > 1 else ""
-                    return True, command, text.strip()
+        # Remove the mention and extract command
+        clean_message = message.replace(f'<@{self.bot_user_id}>', '').strip()
+        
+        # Must start with !
+        if not clean_message.startswith('!'):
+            return False, None, None
+        
+        # Parse command
+        parts = clean_message[1:].split(' ', 1)
+        cmd = parts[0].lower()
+        
+        if cmd in VALID_COMMANDS:
+            command = f"!{cmd}"
+            text = parts[1] if len(parts) > 1 else ""
+            return True, command, text.strip()
         
         return False, None, None
     
     def format_slack_text(self, text: str) -> str:
-        """
-        Convert markdown-style formatting to Slack formatting.
-        
-        Args:
-            text: Text with markdown formatting
-            
-        Returns:
-            str: Text with Slack formatting
-        """
+        """Convert markdown-style formatting to Slack formatting."""
         lines = text.split('\n')
         formatted_lines = []
         
@@ -119,8 +110,8 @@ class WalletCommandBot:
         
         return '\n'.join(formatted_lines)
     
-    def handle_message_events(self, client: SocketModeClient, req: SocketModeRequest):
-        """Handle incoming message events from Slack."""
+    def handle_app_mentions(self, client: SocketModeClient, req: SocketModeRequest):
+        """Handle app mention events only - mention-only mode."""
         try:
             # Acknowledge the request
             response = SocketModeResponse(envelope_id=req.envelope_id)
@@ -130,81 +121,52 @@ class WalletCommandBot:
             event = req.payload.get("event", {})
             event_type = event.get("type")
             
-            # DEBUG: Print what we're receiving
-            print(f"🔍 DEBUG: Received event type: {event_type}")
-            print(f"🔍 DEBUG: Full event data: {event}")
-            
-            # Handle both message and app_mention events
-            if event_type not in ["message", "app_mention"]:
-                print(f"🔍 DEBUG: Ignoring event type: {event_type}")
+            # Only process app_mention events
+            if event_type != "app_mention":
                 return
             
             # Get message details
             channel_id = event.get("channel")
             user_id = event.get("user")
             message_text = event.get("text", "")
-            subtype = event.get("subtype")
-            
-            print(f"🔍 DEBUG: Channel: {channel_id}, User: {user_id}, Text: '{message_text}'")
-            print(f"🔍 DEBUG: Target channel: {SLACK_CHANNEL_ID}")
-            print(f"🔍 DEBUG: Bot user ID: {self.bot_user_id}")
             
             # Skip bot messages
-            if subtype == "bot_message" or user_id == self.bot_user_id:
-                print(f"🔍 DEBUG: Skipping bot message")
+            if user_id == self.bot_user_id:
                 return
             
             # Only process messages from our target channel
             if channel_id != SLACK_CHANNEL_ID:
-                print(f"🔍 DEBUG: Wrong channel - ignoring")
                 return
             
-            # Check if this is a command
-            is_command, command, text = self.is_command_message(message_text, user_id)
-            print(f"🔍 DEBUG: Command check result - is_command: {is_command}, command: {command}, text: '{text}'")
+            # Parse command from mention
+            is_command, command, text = self.parse_mention_command(message_text, user_id)
             
             if not is_command:
-                # For app_mention events, if no valid command found, show help
-                if event_type == "app_mention":
-                    print(f"🔍 DEBUG: No valid command in app_mention - sending help")
-                    self.web_client.chat_postMessage(
-                        channel=channel_id,
-                        text="🤖 Hi! Please use a valid command after mentioning me.\n\nUse `@bot !help` to see available commands.",
-                        mrkdwn=True
-                    )
-                    return
-                
-                # For regular messages (if channels:history is available), show invalid command message
-                if event_type == "message":
-                    print(f"🔍 DEBUG: Invalid command in regular message")
-                    self.web_client.chat_postMessage(
-                        channel=channel_id,
-                        text="❌ Invalid command. Use `!help` to see available commands.\n\nValid commands: `!add` `!remove` `!check` `!list` `!help`",
-                        mrkdwn=True
-                    )
-                    print(f"⚠️ Invalid command from user: '{message_text}'")
-                    return
-
-            # --- Permission Check ---
-            print(f"🔍 DEBUG: Checking permissions for user {user_id}")
-            print(f"🔍 DEBUG: Allowed users: {ALLOWED_SLACK_USERS}")
+                # Invalid mention - show help
+                self.web_client.chat_postMessage(
+                    channel=channel_id,
+                    text="🤖 Please use a valid command after mentioning me.\n\nExample: `@bot !help`\n\nAvailable: `!help` `!check` `!list` `!add` `!remove`",
+                    mrkdwn=True
+                )
+                return
+            
+            # Check permissions
             if user_id not in ALLOWED_SLACK_USERS:
                 print(f"⛔ Unauthorized command attempt by user {user_id} for command '{command}'")
                 self.web_client.chat_postMessage(
                     channel=channel_id,
-                    text="⛔ You do not have the required permissions to use this command. Please contact an administrator.",
+                    text="⛔ You do not have permission to use this command. Please contact an administrator.",
                     mrkdwn=True
                 )
-                return # Stop processing if user is not authorized
-            # --- End Permission Check ---
+                return
             
-            print(f"📨 Processing {event_type} command: {command} '{text}' from authorized user {user_id}")
+            print(f"📨 Processing mention command: {command} '{text}' from user {user_id}")
             
             # Process the command
             try:
                 response_text = handle_slack_command(command, text, user_id, channel_id)
                 
-                # Format response with proper headers
+                # Format response with headers
                 if command == "!list":
                     formatted_response = f"🤖 *Wallet List*\n\n{self.format_slack_text(response_text)}"
                 elif command == "!help":
@@ -216,7 +178,7 @@ class WalletCommandBot:
                 elif command == "!remove":
                     formatted_response = f"🤖 *Remove Wallet Result*\n\n{self.format_slack_text(response_text)}"
                 else:
-                    formatted_response = f"🤖 *CryptoBalanceBot Response*\n\n{self.format_slack_text(response_text)}"
+                    formatted_response = f"🤖 *Response*\n\n{self.format_slack_text(response_text)}"
                 
                 # Send response
                 self.web_client.chat_postMessage(
@@ -229,48 +191,43 @@ class WalletCommandBot:
                 
             except Exception as e:
                 print(f"❌ Error processing command {command}: {e}")
-                
-                # Send error message
                 self.web_client.chat_postMessage(
                     channel=channel_id,
-                    text=f"❌ Sorry, there was an error processing your `{command}` command. Please try again.",
+                    text=f"❌ Error processing `{command}` command. Please try again.",
                     mrkdwn=True
                 )
         
         except Exception as e:
-            print(f"❌ Error in message handler: {e}")
+            print(f"❌ Error in mention handler: {e}")
             import traceback
             traceback.print_exc()
-            
+    
     def start(self):
-        """Start the bot listener."""
+        """Start the bot listener in mention-only mode."""
         if not self.bot_user_id:
             print("❌ Cannot start bot - authentication failed")
             return
         
-        # Register event handler
-        self.socket_client.socket_mode_request_listeners.append(self.handle_message_events)
+        # Register ONLY app mention handler
+        self.socket_client.socket_mode_request_listeners.append(self.handle_app_mentions)
         
-        print("🚀 Starting USDT Wallet Command Bot...")
-        print(f"📡 Listening for commands in channel: {SLACK_CHANNEL_ID}")
-        print("💬 Commands (MUST start with !):")
-        print("   !add \"company\" \"wallet\" \"address\"")
-        print("   !remove \"wallet_name\"")
-        print("   !check [wallets]")
-        print("   !list")
-        print("   !help")
-        print("   @CryptoBalanceBot !command (mentions also work)")
-        
-        # Add a note about authorized users
-        print(f"🔐 Only authorized users ({', '.join(ALLOWED_SLACK_USERS)}) can use management commands.")
+        print("🚀 Starting USDT Wallet Bot (Mention-Only Mode)...")
+        print(f"📡 Listening for mentions in channel: {SLACK_CHANNEL_ID}")
+        print("💬 Usage (MUST mention bot):")
+        print("   @bot !help     - Show commands")
+        print("   @bot !check    - Check balances")
+        print("   @bot !list     - List wallets")
+        print("   @bot !add \"company\" \"wallet\" \"address\"")
+        print("   @bot !remove \"wallet_name\"")
         print()
-        print("🔄 Bot is running... Press Ctrl+C to stop")
+        print(f"🔐 Authorized users: {', '.join(ALLOWED_SLACK_USERS)}")
+        print("🔒 Bot will be SILENT for non-mention messages")
+        print()
+        print("🔄 Bot running... Press Ctrl+C to stop")
         
         try:
-            # Start the socket connection
             self.socket_client.connect()
             
-            # Keep the connection alive
             while True:
                 time.sleep(1)
                 
@@ -291,7 +248,6 @@ def main():
     
     if not SLACK_APP_TOKEN:
         print("❌ SLACK_APP_TOKEN not found in environment variables")
-        print("ℹ️  You need to enable Socket Mode and get an App Token from Slack")
         return
     
     if not SLACK_CHANNEL_ID:
