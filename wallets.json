@@ -12,7 +12,7 @@
   "KZP WDB1": {
     "company": "KZP",
     "wallet": "KZP WDB1",
-    "address": "TEhmKXCPgX64yjQ3t9skuSyUQBxwaWY4KS"
+    "address": "TEhmKXCPgX64yJQ3t9skuSyUQBxwaWY4KS"
   },
   "KZP TH 1": {
     "company": "KZP",
@@ -32,7 +32,7 @@
   "KZP PH 1": {
     "company": "KZP",
     "wallet": "KZP PH 1",
-    "address": "THB5JtMUtvmZ94HdCqqL34SzSfjavF58Ga"
+    "address": "THB5JtMUtvmZ94HdCqqL34SzSfJavF58Ga"
   },
   "KZP PH BM 1": {
     "company": "KZP",
@@ -42,6 +42,6 @@
   "KZP KZO1": {
     "company": "KZP",
     "wallet": "KZP KZO1",
-    "address": "TDj1whxgFjSGktyv9yLR3wZUm5gNK8X7m2"
+    "address": "TDj1whxgFJSGktyv9yLR3wZUm5gNK8X7m2"
   }
 }
